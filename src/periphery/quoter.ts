@@ -1,6 +1,6 @@
 import { Interface } from '@ethersproject/abi'
 import { Currency, CurrencyAmount, TradeType } from '@uniswap/sdk-core'
-import { abi as QuoterABI } from '../artifacts/contracts/periphery/lens/Quoter.sol/Quoter.json'
+import { abi as QuoterABI } from '../artifacts/contracts/periphery/lens/IQuoter.sol/IQuoter.json'
 import { Route } from '../entities/route'
 import { MethodParameters, toHex } from '../utils/calldata'
 import { encodeRouteToPath } from './encodeRouteToPath'
