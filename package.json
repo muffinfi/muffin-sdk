@@ -1,0 +1,41 @@
+{
+  "name": "@muffinfi/muffin-v1-sdk",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "version": "1.0.0",
+  "description": "An SDK for building applications on top of Muffin V1",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "repository": "https://github.com/deliswap/muffin-v1-sdk.git",
+  "module": "dist/v1-sdk.esm.js",
+  "scripts": {
+    "build": "tsdx build",
+    "start": "tsdx watch",
+    "test": "tsdx test",
+    "prepublishOnly": "tsdx build"
+  },
+  "dependencies": {
+    "@ethersproject/abi": "^5.5.0",
+    "@ethersproject/solidity": "^5.5.0",
+    "@uniswap/sdk-core": "^3.0.1",
+    "tiny-invariant": "^1.1.0",
+    "tiny-warning": "^1.0.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.25",
+    "tsdx": "^0.14.1"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "prettier": {
+    "printWidth": 120,
+    "semi": false,
+    "singleQuote": true
+  }
+}
