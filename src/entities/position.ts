@@ -27,6 +27,7 @@ export class Position {
   public readonly liquidityD8: JSBI
   public readonly limitOrderType: LimitOrderType = LimitOrderType.NotLimitOrder
   public readonly settlementSnapshotId: JSBI = ZERO
+  public readonly settled: boolean = false
 
   private _token0Amount?: CurrencyAmount<Token> // cache
   private _token1Amount?: CurrencyAmount<Token> // cache
@@ -39,7 +40,8 @@ export class Position {
     tickUpper,
     liquidityD8,
     limitOrderType,
-    settlementSnapshotId
+    settlementSnapshotId,
+    settled
   }: {
     pool: Pool
     tierId: number
@@ -48,11 +50,17 @@ export class Position {
     liquidityD8: BigintIsh
     limitOrderType?: number
     settlementSnapshotId?: BigintIsh
+    settled?: boolean
   }) {
     invariant(tickLower < tickUpper, 'TICK_ORDER')
     invariant(tickLower >= MIN_TICK && tickLower % pool.tickSpacing === 0, 'TICK_LOWER')
     invariant(tickUpper <= MAX_TICK && tickUpper % pool.tickSpacing === 0, 'TICK_UPPER')
     invariant(tierId < pool.tiers.length, 'TIER_ID')
+    invariant(limitOrderType == null || limitOrderType in LimitOrderType, 'LIMIT_ORDER_TYPE')
+    invariant(
+      !settled || (limitOrderType != null && limitOrderType !== LimitOrderType.NotLimitOrder),
+      'LIMIT_ORDER_TYPE'
+    )
 
     this.pool = pool
     this.tierId = tierId
@@ -60,9 +68,9 @@ export class Position {
     this.tickUpper = tickUpper
     this.liquidityD8 = JSBI.BigInt(liquidityD8)
 
-    if (limitOrderType != null) invariant(limitOrderType in LimitOrderType, 'invalid limit order type')
     if (limitOrderType != null) this.limitOrderType = limitOrderType
     if (settlementSnapshotId != null) this.settlementSnapshotId = JSBI.BigInt(settlementSnapshotId)
+    if (settled != null) this.settled = settled
   }
 
   public static fromAmounts({ pool, tierId, tickLower, tickUpper, amount0, amount1 }: FromAmountsArgs): Position {
@@ -126,23 +134,23 @@ export class Position {
   }
 
   private _calculateSqrtPrices() {
-    if (this.limitOrderType != LimitOrderType.NotLimitOrder) {
-      throw new Error('Limit order not supported yet ')
-    }
-
     const sqrtPLower = TickMath.tickToSqrtPriceX72(this.tickLower)
     const sqrtPUpper = TickMath.tickToSqrtPriceX72(this.tickUpper)
-    const sqrtPCurrent = this.poolTier.sqrtPriceX72
 
-    let sqrtPExit
-    if (JSBI.lessThan(sqrtPCurrent, sqrtPLower)) {
-      sqrtPExit = sqrtPLower
-    } else if (JSBI.greaterThan(sqrtPCurrent, sqrtPUpper)) {
-      sqrtPExit = sqrtPUpper
+    let sqrtPExit: JSBI
+    if (this.settled) {
+      sqrtPExit = this.limitOrderType === LimitOrderType.ZeroForOne ? sqrtPUpper : sqrtPLower
     } else {
-      sqrtPExit = sqrtPCurrent
+      const sqrtPCurrent = this.poolTier.sqrtPriceX72
+      if (JSBI.lessThan(sqrtPCurrent, sqrtPLower)) {
+        sqrtPExit = sqrtPLower
+      } else if (JSBI.greaterThan(sqrtPCurrent, sqrtPUpper)) {
+        sqrtPExit = sqrtPUpper
+      } else {
+        sqrtPExit = sqrtPCurrent
+      }
     }
-    return { sqrtPLower, sqrtPUpper, sqrtPCurrent, sqrtPExit }
+    return { sqrtPLower, sqrtPUpper, sqrtPExit }
   }
 
   // Returns the minimum input amounts required to mint the amount of liquidity of this position
@@ -178,6 +186,8 @@ export class Position {
     return { amount0, amount1 }
   }
 
+  // Returns the minimum output amounts expected from burning the liquidity of this position with the given slippage tolerance
+  // (Note that this is not for settled position)
   public burnAmountsWithSlippage(slippageTolerance: Percent): Readonly<{ amount0: JSBI; amount1: JSBI }> {
     const sqrtPLower = TickMath.tickToSqrtPriceX72(this.tickLower)
     const sqrtPUpper = TickMath.tickToSqrtPriceX72(this.tickUpper)
