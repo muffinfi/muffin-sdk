@@ -58,7 +58,7 @@ export abstract class TickMath {
     invariant(JSBI.lessThanOrEqual(sqrtPriceX72, TickMath.MAX_SQRT_P), 'SQRT_RATIO')
 
     const msb = mostSignificantBit(sqrtPriceX72)
-    let log2 = JSBI.leftShift(JSBI.subtract(JSBI.BigInt(127), JSBI.BigInt(msb)), JSBI.BigInt(64))
+    let log2 = JSBI.leftShift(JSBI.subtract(JSBI.BigInt(msb), JSBI.BigInt(72)), JSBI.BigInt(64))
     let z = JSBI.leftShift(sqrtPriceX72, JSBI.BigInt(127 - msb))
 
     for (let i = 0; i < 18; i++) {
