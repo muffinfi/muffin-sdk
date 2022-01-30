@@ -1,7 +1,7 @@
-import { BigintIsh, Price, sqrt, Token } from '@uniswap/sdk-core'
+import { BigintIsh, Fraction, Price, sqrt, Token } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
-import { MAX_SQRT_P, MAX_TICK, MIN_SQRT_P, MIN_TICK, Q144, SQRT_GAMMAS_FIRST_TIER } from '../constants'
+import { MAX_SQRT_P, MAX_TICK, MIN_SQRT_P, MIN_TICK, Q72, Q144, SQRT_GAMMAS_FIRST_TIER } from '../constants'
 import { TickMath } from './tickMath'
 
 /*====================================================================
@@ -81,19 +81,29 @@ export function tickToPrice(baseToken: Token, quoteToken: Token, tick: number): 
  * Returns the first tick for which the given price is greater than or equal to the tick price
  * @param price for which to return the closest tick that represents a price less than or equal to the input price,
  * i.e. the price of the returned tick is less than or equal to the input price
+ * @param tolerance the % amount we add to the given price to see if it reaches the next tick's price. If so, we treat the
+ * next tick's price as the closest price. This is to compensate the rounding error when turning price into sqrtPriceX72
  */
-export function priceToClosestTick(price: Price<Token, Token>): number {
+export function priceToClosestTick(
+  price: Price<Token, Token>,
+  tolerance: Fraction = new Fraction('1', '1000000000000000000000') // 1e-21
+): number {
   const sorted = price.baseCurrency.sortsBefore(price.quoteCurrency)
   const sqrtPriceX72 = sorted
     ? encodeSqrtPriceX72(price.numerator, price.denominator)
     : encodeSqrtPriceX72(price.denominator, price.numerator)
-  let tick = TickMath.sqrtPriceX72ToTick(sqrtPriceX72)
 
-  const nextTickPrice = tickToPrice(price.baseCurrency, price.quoteCurrency, tick + 1)
+  let tick = TickMath.sqrtPriceX72ToTick(sqrtPriceX72)
+  const priceNextTick = tickToPrice(price.baseCurrency, price.quoteCurrency, tick + 1)
+
+  const factor = new Fraction(1).add(tolerance)
+  const ratio = new Fraction(price.numerator, price.denominator)
+  const ratioNextTick = new Fraction(priceNextTick.numerator, priceNextTick.denominator)
+
   if (sorted) {
-    if (!price.lessThan(nextTickPrice)) tick++
+    if (!ratio.multiply(factor).lessThan(ratioNextTick)) tick++
   } else {
-    if (!price.greaterThan(nextTickPrice)) tick++
+    if (!ratio.divide(factor).greaterThan(ratioNextTick)) tick++
   }
   return tick
 }
