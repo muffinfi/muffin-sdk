@@ -3,7 +3,7 @@ import { BigintIsh, NativeCurrency, Percent, validateAndParseAddress } from '@un
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { abi as PositionManagerABI } from '../artifacts/contracts/periphery/base/PositionManager.sol/PositionManager.json'
-import { ZERO } from '../constants'
+import { BASE_LIQUIDITY_D8, ZERO } from '../constants'
 import { Pool } from '../entities/pool'
 import { Position } from '../entities/position'
 import { MethodParameters, toHex } from '../utils/calldata'
@@ -90,17 +90,31 @@ export abstract class PositionManager {
   }
 
   public static addCallParameters(position: Position, options: AddLiquidityOptions): MethodParameters {
-    invariant(JSBI.greaterThan(position.liquidity, ZERO), 'ZERO_LIQUIDITY')
+    invariant(JSBI.greaterThan(position.liquidityD8, ZERO), 'ZERO_LIQUIDITY')
 
     const calldatas: string[] = []
-
-    // get amounts
-    const { amount0: amount0Desired, amount1: amount1Desired } = position.mintAmounts
-    const { amount0: amount0Min, amount1: amount1Min } = position.mintAmountsWithSlippage(options.slippageTolerance)
 
     // create pool if needed
     if (isMint(options) && options.createPool) {
       calldatas.push(this.encodeCreate(position.pool))
+
+      /**
+       * Subtract position's liquidity with a base that is used to create pool.
+       * Note that base liquidity is taking more tokens than it should, as it's using simple xy=k invariant
+       * This can makes users have not enough tokens to mint liquidity, which is a potential bug
+       */
+      const liquidityD8 = JSBI.subtract(position.liquidityD8, JSBI.BigInt(BASE_LIQUIDITY_D8))
+      invariant(JSBI.greaterThan(liquidityD8, ZERO), 'ZERO_LIQUIDITY_AFTER_CREATE')
+      position = new Position({
+        pool: position.pool,
+        tierId: position.tierId,
+        tickLower: position.tickLower,
+        tickUpper: position.tickUpper,
+        liquidityD8,
+        limitOrderType: position.limitOrderType,
+        settlementSnapshotId: position.settlementSnapshotId,
+        settled: position.settled
+      })
     }
 
     // permits if necessary
@@ -110,6 +124,10 @@ export abstract class PositionManager {
     if (options.token1Permit) {
       calldatas.push(SelfPermit.encodePermit(position.pool.token1, options.token1Permit))
     }
+
+    // get amounts
+    const { amount0: amount0Desired, amount1: amount1Desired } = position.mintAmounts
+    const { amount0: amount0Min, amount1: amount1Min } = position.mintAmountsWithSlippage(options.slippageTolerance)
 
     // mint
     calldatas.push(
