@@ -1,7 +1,7 @@
 import { BigintIsh, Fraction, Price, sqrt, Token } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
-import { MAX_SQRT_P, MAX_TICK, MIN_SQRT_P, MIN_TICK, Q72, Q144, SQRT_GAMMAS_FIRST_TIER } from '../constants'
+import { MAX_SQRT_P, MAX_TICK, MIN_SQRT_P, MIN_TICK, Q144, SQRT_GAMMAS_FIRST_TIER } from '../constants'
 import { TickMath } from './tickMath'
 
 /*====================================================================
@@ -12,7 +12,7 @@ export function isValidSqrtGamma(sqrtGamma: number | undefined): sqrtGamma is nu
   return sqrtGamma != null && sqrtGamma > 0 && sqrtGamma <= 100_000
 }
 
-export function isValidFirstTierSqrtGamma(sqrtGamma: number | undefined) {
+export function isValidFirstTierSqrtGamma(sqrtGamma: number | undefined): sqrtGamma is number {
   return sqrtGamma != null && SQRT_GAMMAS_FIRST_TIER.includes(sqrtGamma)
 }
 
