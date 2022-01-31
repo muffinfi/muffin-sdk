@@ -64,6 +64,18 @@ export class Tier {
     return token.equals(this.token0) || token.equals(this.token1)
   }
 
+  public equals(other: Tier): boolean {
+    return (
+      this.token0.equals(other.token0) &&
+      this.token1.equals(other.token1) &&
+      JSBI.equal(this.liquidity, other.liquidity) &&
+      JSBI.equal(this.sqrtPriceX72, other.sqrtPriceX72) &&
+      this.sqrtGamma === other.sqrtGamma &&
+      this.nextTickBelow === other.nextTickBelow &&
+      this.nextTickAbove === other.nextTickAbove
+    )
+  }
+
   /**
    * Return the price of the given token in terms of the other token in the pool.
    * @param token The token to return price of

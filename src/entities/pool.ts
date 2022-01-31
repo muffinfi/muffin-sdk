@@ -44,4 +44,16 @@ export class Pool {
   public involvesToken(token: Token): boolean {
     return token.equals(this.token0) || token.equals(this.token1)
   }
+
+  /**
+   * Return true if this pool and all tiers equal another
+   */
+  public equals(other: Pool): boolean {
+    if (!this.token0.equals(other.token0)) return false
+    if (!this.token1.equals(other.token1)) return false
+    if (this.tickSpacing !== other.tickSpacing) return false
+    if (this.tiers.length !== other.tiers.length) return false
+    for (const [i, tier] of this.tiers.entries()) if (!tier.equals(other.tiers[i])) return false
+    return true
+  }
 }
