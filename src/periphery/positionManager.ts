@@ -55,7 +55,7 @@ export interface RemoveLiquidityOptions {
   liquidityPercentage: Percent // The percentage of position liquidity to exit.
   slippageTolerance: Percent //   How much the pool price is allowed to move.
   withdrawalRecipient: string
-  collectAllFee: boolean
+  collectAllFees: boolean
   isSettledPosition?: boolean
   permit?: NFTPermitOptions //    The optional permit of the token ID being exited, in case the exit transaction is being sent by an account that does not own the NFT
 }
@@ -226,7 +226,7 @@ export abstract class PositionManager {
           amount0Min: toHex(amount0Min),
           amount1Min: toHex(amount1Min),
           withdrawTo: validateAndParseAddress(options.withdrawalRecipient),
-          collectAllFees: options.collectAllFee,
+          collectAllFees: options.collectAllFees,
           settled: options.isSettledPosition === true
         }
       ])
