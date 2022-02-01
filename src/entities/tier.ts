@@ -1,8 +1,8 @@
 import { BigintIsh, Fraction, Percent, Price, Token } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
-import { E10, MAX_SQRT_P, MIN_SQRT_P, Q144 } from '../constants'
-import { encodeSqrtPriceX72 } from '../utils/misc'
+import { MAX_SQRT_P, MIN_SQRT_P, Q144 } from '../constants'
+import { encodeSqrtPriceX72, sqrtGammaToFee } from '../utils/misc'
 import { TickMath } from '../utils/tickMath'
 
 export type TierChainData = {
@@ -106,13 +106,11 @@ export class Tier {
   }
 
   public get fee(): Fraction {
-    const sqrtGamma = JSBI.BigInt(this.sqrtGamma)
-    const gamma = JSBI.multiply(sqrtGamma, sqrtGamma)
-    return new Fraction(JSBI.subtract(E10, gamma), E10)
+    return sqrtGammaToFee(this.sqrtGamma)
   }
 
   public get feePercent(): Fraction {
-    return new Fraction(this.fee.numerator, JSBI.divide(E10, JSBI.BigInt('100')))
+    return this.fee.multiply(100)
   }
 
   public sqrtPriceAfterSlippage(
