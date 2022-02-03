@@ -15,7 +15,7 @@ export abstract class SwapQuoter {
   ): MethodParameters {
     const signedAmount = amount.multiply(tradeType == TradeType.EXACT_INPUT ? 1 : -1)
 
-    const calldata: string =
+    const calldata =
       route.pools.length === 1
         ? SwapQuoter.INTERFACE.encodeFunctionData(`quoteSingle`, [
             route.tokenPath[0].address,
@@ -38,18 +38,10 @@ export abstract class SwapQuoter {
   ): MethodParameters {
     const signedAmount = amount.multiply(tradeType == TradeType.EXACT_INPUT ? 1 : -1)
 
-    const calldata: string =
-      route.pools.length === 1
-        ? SwapQuoter.INTERFACE.encodeFunctionData(`simulateSingle`, [
-            route.tokenPath[0].address,
-            route.tokenPath[1].address,
-            route.tierChoicesList[0],
-            signedAmount.quotient.toString()
-          ])
-        : SwapQuoter.INTERFACE.encodeFunctionData('simulate', [
-            encodeRouteToPath(route, tradeType === TradeType.EXACT_OUTPUT),
-            signedAmount.quotient.toString()
-          ])
+    const calldata = SwapQuoter.INTERFACE.encodeFunctionData('simulate', [
+      encodeRouteToPath(route, tradeType === TradeType.EXACT_OUTPUT),
+      signedAmount.quotient.toString()
+    ])
 
     return { calldata, value: toHex(0) }
   }
