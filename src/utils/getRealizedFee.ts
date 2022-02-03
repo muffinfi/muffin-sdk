@@ -5,6 +5,9 @@ import { getAmountInDistribution, Hop } from './getPriceImpact'
 
 const ONE_HUNDRED_PERCENT = new Percent(1, 1)
 
+/**
+ * TODO: seems not making sense. pending to delete
+ */
 export function getRealizedFee<TInput extends Currency, TOutput extends Currency>(
   trade: Trade<TInput, TOutput, TradeType>,
   hops: Hop[][]

@@ -1,5 +1,5 @@
 import { CurrencyAmount, Percent, Token, TradeType } from '@uniswap/sdk-core'
-import JSBI from 'JSBI'
+import JSBI from 'jsbi'
 import { MAX_TICK, MIN_TICK, Q72 } from '../constants'
 import { Pool } from '../entities/pool'
 import { Route } from '../entities/route'

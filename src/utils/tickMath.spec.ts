@@ -1,4 +1,4 @@
-import JSBI from 'JSBI'
+import JSBI from 'jsbi'
 import { TickMath } from './tickMath'
 
 const ONE = JSBI.BigInt(1)

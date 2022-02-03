@@ -1,10 +1,13 @@
-import { BigNumberish } from '@ethersproject/bignumber'
 import { Currency, CurrencyAmount, Percent, TradeType } from '@uniswap/sdk-core'
-import JSBI from 'JSBI'
+import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { ZERO } from '../constants'
 import { Route } from '../entities/route'
 import { Trade } from '../entities/trade'
+
+interface BigNumberish {
+  toString(): string
+}
 
 export interface Hop {
   tierAmountsIn: BigNumberish[]
