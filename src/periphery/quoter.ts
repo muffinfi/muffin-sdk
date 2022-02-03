@@ -14,7 +14,6 @@ export abstract class SwapQuoter {
     tradeType: TradeType
   ): MethodParameters {
     const signedAmount = amount.multiply(tradeType == TradeType.EXACT_INPUT ? 1 : -1)
-    const hexAmount = toHex(signedAmount.quotient)
 
     const calldata: string =
       route.pools.length === 1
@@ -22,11 +21,11 @@ export abstract class SwapQuoter {
             route.tokenPath[0].address,
             route.tokenPath[1].address,
             route.tierChoicesList[0],
-            hexAmount
+            signedAmount.quotient.toString()
           ])
         : SwapQuoter.INTERFACE.encodeFunctionData('quote', [
             encodeRouteToPath(route, tradeType === TradeType.EXACT_OUTPUT),
-            hexAmount
+            signedAmount.quotient.toString()
           ])
 
     return { calldata, value: toHex(0) }
