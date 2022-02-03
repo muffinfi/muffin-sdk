@@ -30,4 +30,27 @@ export abstract class SwapQuoter {
 
     return { calldata, value: toHex(0) }
   }
+
+  public static simulateCallParameters<TInput extends Currency, TOutput extends Currency>(
+    route: Route<TInput, TOutput>,
+    amount: CurrencyAmount<TInput | TOutput>,
+    tradeType: TradeType
+  ): MethodParameters {
+    const signedAmount = amount.multiply(tradeType == TradeType.EXACT_INPUT ? 1 : -1)
+
+    const calldata: string =
+      route.pools.length === 1
+        ? SwapQuoter.INTERFACE.encodeFunctionData(`simulateSingle`, [
+            route.tokenPath[0].address,
+            route.tokenPath[1].address,
+            route.tierChoicesList[0],
+            signedAmount.quotient.toString()
+          ])
+        : SwapQuoter.INTERFACE.encodeFunctionData('simulate', [
+            encodeRouteToPath(route, tradeType === TradeType.EXACT_OUTPUT),
+            signedAmount.quotient.toString()
+          ])
+
+    return { calldata, value: toHex(0) }
+  }
 }
