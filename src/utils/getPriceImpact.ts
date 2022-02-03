@@ -2,12 +2,18 @@ import { BigNumberish } from '@ethersproject/bignumber'
 import { Currency, CurrencyAmount, Percent, TradeType } from '@uniswap/sdk-core'
 import JSBI from 'JSBI'
 import invariant from 'tiny-invariant'
-import { ZERO } from '..'
+import { ZERO } from '../constants'
 import { Route } from '../entities/route'
 import { Trade } from '../entities/trade'
 
 export interface Hop {
   tierAmountsIn: BigNumberish[]
+}
+
+export function getAmountInDistribution(hop: Hop): Percent[] {
+  const tierAmtsIn = hop.tierAmountsIn.map(amtIn => JSBI.BigInt(amtIn.toString()))
+  const sumAmtIn = tierAmtsIn.reduce((acc, amtIn) => JSBI.add(acc, amtIn), ZERO)
+  return tierAmtsIn.map(amtIn => new Percent(amtIn, sumAmtIn))
 }
 
 export function getSpotOutputAmount<TInput extends Currency, TOutput extends Currency>(
@@ -22,14 +28,10 @@ export function getSpotOutputAmount<TInput extends Currency, TOutput extends Cur
   let input = inputAmount.currency
 
   for (const [i, pool] of route.pools.entries()) {
-    const _tierAmtsIn = hops[i].tierAmountsIn.map(amtIn => JSBI.BigInt(amtIn.toString()))
-    const _sumAmtIn = _tierAmtsIn.reduce((acc, amtIn) => JSBI.add(acc, amtIn), ZERO)
-    const amtInDistribution = _tierAmtsIn.map(amtIn => new Percent(amtIn, _sumAmtIn))
-
     const output = input.equals(pool.token0) ? pool.token1 : pool.token0
     let spotOutputAmount = CurrencyAmount.fromRawAmount(output, 0)
 
-    for (const [tierId, percent] of amtInDistribution.entries()) {
+    for (const [tierId, percent] of getAmountInDistribution(hops[i]).entries()) {
       const tierAmtIn = inputAmount.multiply(percent)
       const tier = pool.tiers[tierId]
       const price = input.equals(pool.token0) ? tier.token0Price : tier.token1Price
