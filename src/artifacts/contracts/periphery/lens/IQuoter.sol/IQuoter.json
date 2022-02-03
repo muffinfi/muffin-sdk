@@ -4,6 +4,19 @@
   "sourceName": "contracts/periphery/lens/IQuoter.sol",
   "abi": [
     {
+      "inputs": [],
+      "name": "hub",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "bytes",
@@ -76,6 +89,128 @@
           "internalType": "uint256",
           "name": "gasUsed",
           "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "path",
+          "type": "bytes"
+        },
+        {
+          "internalType": "int256",
+          "name": "amountDesired",
+          "type": "int256"
+        }
+      ],
+      "name": "simulate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountOut",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "protocolFeeAmt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tierAmountsIn",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tierData",
+              "type": "uint256[]"
+            }
+          ],
+          "internalType": "struct IQuoter.Hop[]",
+          "name": "hops",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tokenIn",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "tokenOut",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tierChoices",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int256",
+          "name": "amountDesired",
+          "type": "int256"
+        }
+      ],
+      "name": "simulateSingle",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountOut",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "protocolFeeAmt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tierAmountsIn",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tierData",
+              "type": "uint256[]"
+            }
+          ],
+          "internalType": "struct IQuoter.Hop",
+          "name": "hop",
+          "type": "tuple"
         }
       ],
       "stateMutability": "view",
