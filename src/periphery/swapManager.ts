@@ -90,7 +90,7 @@ export abstract class SwapManager {
         if (route.pools.length === 1) {
           const calldata =
             trade.tradeType === TradeType.EXACT_INPUT
-              ? SwapManager.INTERFACE.encodeFunctionData('exactInputSingle', [
+              ? SwapManager.INTERFACE.encodeFunctionData('exactInSingle', [
                   route.tokenPath[0].address,
                   route.tokenPath[1].address,
                   route.tierChoicesList[0],
@@ -100,7 +100,7 @@ export abstract class SwapManager {
                   options.fromAccount,
                   options.toAccount
                 ])
-              : SwapManager.INTERFACE.encodeFunctionData('exactOutputSingle', [
+              : SwapManager.INTERFACE.encodeFunctionData('exactOutSingle', [
                   route.tokenPath[0].address,
                   route.tokenPath[1].address,
                   route.tierChoicesList[0],
@@ -115,7 +115,7 @@ export abstract class SwapManager {
           const path = encodeRouteToPath(route, trade.tradeType === TradeType.EXACT_OUTPUT)
           const calldata =
             trade.tradeType === TradeType.EXACT_INPUT
-              ? SwapManager.INTERFACE.encodeFunctionData('exactInput', [
+              ? SwapManager.INTERFACE.encodeFunctionData('exactIn', [
                   path,
                   amountIn,
                   amountOut,
@@ -123,7 +123,7 @@ export abstract class SwapManager {
                   options.fromAccount,
                   options.toAccount
                 ])
-              : SwapManager.INTERFACE.encodeFunctionData('exactOutput', [
+              : SwapManager.INTERFACE.encodeFunctionData('exactOut', [
                   path,
                   amountOut,
                   amountIn,
