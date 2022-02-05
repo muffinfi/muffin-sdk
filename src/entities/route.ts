@@ -12,6 +12,8 @@ export class Route<TInput extends Currency, TOutput extends Currency> {
   public readonly input: TInput
   public readonly output: TOutput
 
+  private _impreciseMidPrice?: Price<TInput, TOutput> // cache
+
   /**
    * Creates an instance of route.
    * @param pools An array of `Pool` objects, ordered by the route the swap will take
@@ -60,5 +62,26 @@ export class Route<TInput extends Currency, TOutput extends Currency> {
 
   public get midPrice(): Price<TInput, TOutput> {
     throw new Error('Mid price not supported')
+  }
+
+  /**
+   * Returns the mid price of the route
+   * Imprecise because it only uses the most liquid tier in each pool to calculate the mid price
+   */
+  public get impreciseMidPrice(): Price<TInput, TOutput> {
+    if (this._impreciseMidPrice != null) return this._impreciseMidPrice
+
+    const price = this.pools.slice(1).reduce(
+      ({ nextInput, price }, pool) => {
+        return nextInput.equals(pool.token0)
+          ? { nextInput: pool.token1, price: price.multiply(pool.mostLiquidTier.token0Price) }
+          : { nextInput: pool.token0, price: price.multiply(pool.mostLiquidTier.token1Price) }
+      },
+      this.pools[0].token0.equals(this.input.wrapped)
+        ? { nextInput: this.pools[0].token1, price: this.pools[0].mostLiquidTier.token0Price }
+        : { nextInput: this.pools[0].token0, price: this.pools[0].mostLiquidTier.token1Price }
+    ).price
+
+    return (this._impreciseMidPrice = new Price(this.input, this.output, price.denominator, price.numerator))
   }
 }

@@ -1,6 +1,8 @@
 import { defaultAbiCoder } from '@ethersproject/abi'
 import { keccak256 } from '@ethersproject/keccak256'
 import { Token } from '@uniswap/sdk-core'
+import JSBI from 'jsbi'
+import invariant from 'tiny-invariant'
 import { Tier, TierChainData } from './tier'
 
 export class Pool {
@@ -10,6 +12,8 @@ export class Pool {
   public readonly tiers: Tier[]
 
   public constructor(tokenA: Token, tokenB: Token, tickSpacing: number, tiers: Tier[]) {
+    invariant(tickSpacing > 0, 'TICK_SPACING')
+    invariant(tiers.length > 0, 'ZERO_TIERS')
     ;[this.token0, this.token1] = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA]
     this.tickSpacing = tickSpacing
     this.tiers = tiers.slice()
@@ -55,5 +59,14 @@ export class Pool {
     if (this.tiers.length !== other.tiers.length) return false
     for (const [i, tier] of this.tiers.entries()) if (!tier.equals(other.tiers[i])) return false
     return true
+  }
+
+  /**
+   * Return the tier with the most liquidity
+   */
+  public get mostLiquidTier(): Tier {
+    return this.tiers.slice(1).reduce((acc, tier) => {
+      return JSBI.greaterThan(tier.liquidity, acc.liquidity) ? tier : acc
+    }, this.tiers[0])
   }
 }
