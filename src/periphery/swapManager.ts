@@ -1,3 +1,4 @@
+import JSBI from 'jsbi'
 import { Interface } from '@ethersproject/abi'
 import { Currency, CurrencyAmount, Percent, TradeType, validateAndParseAddress } from '@uniswap/sdk-core'
 import invariant from 'tiny-invariant'
@@ -8,9 +9,10 @@ import { encodeRouteToPath } from './encodeRouteToPath'
 import { Multicall } from './multicall'
 import { Payments } from './payments'
 import { PermitOptions, SelfPermit } from './selfPermit'
+import { SWAP_AMOUNT_TOLERANCE } from '../constants'
 
 /**
- * Options for producing the arguments to send calls to the router.
+ * Options for producing the arguments to send calls to the manager.
  */
 export interface SwapOptions {
   recipient: string //                The account that should receive the output.
@@ -18,6 +20,7 @@ export interface SwapOptions {
   toAccount: boolean //               Send swap output token to recipient internal account
   slippageTolerance: Percent //       How much the execution price is allowed to move unfavorably from the trade execution price.
   inputTokenPermit?: PermitOptions // The optional permit parameters for spending the input.
+  managerAddress?: string //          Address of the swap manager contract
 }
 
 export abstract class SwapManager {
@@ -63,15 +66,20 @@ export abstract class SwapManager {
     const outputIsNative = sampleTrade.outputAmount.currency.isNative
 
     // flag for whether a refund needs to happen
-    const mustRefund = sampleTrade.inputAmount.currency.isNative && sampleTrade.tradeType === TradeType.EXACT_OUTPUT
+    const mustRefund =
+      !options.fromAccount &&
+      sampleTrade.inputAmount.currency.isNative &&
+      sampleTrade.tradeType === TradeType.EXACT_OUTPUT
 
-    // flags for whether funds should be send first to the router
-    const routerMustCustody = outputIsNative
+    // flags for whether funds should be send first to the manager
+    const managerMustCustody = !options.toAccount && outputIsNative
+    invariant(!managerMustCustody || options.managerAddress, 'MISSING_MANAGER_ADDRESS')
 
     // calculate msg.value if input is eth (or native coin)
-    const totalTxValue: CurrencyAmount<Currency> = inputIsNative
-      ? trades.reduce((sum, trade) => sum.add(trade.maximumAmountIn(options.slippageTolerance)), ZERO_IN)
-      : ZERO_IN
+    const totalTxValue: CurrencyAmount<Currency> =
+      !options.fromAccount && inputIsNative
+        ? trades.reduce((sum, trade) => sum.add(trade.maximumAmountIn(options.slippageTolerance)), ZERO_IN)
+        : ZERO_IN
 
     // encode permit if necessary
     if (options.inputTokenPermit) {
@@ -86,6 +94,7 @@ export abstract class SwapManager {
       for (const { route, inputAmount, outputAmount } of trade.swaps) {
         const amountIn = toHex(trade.maximumAmountIn(options.slippageTolerance, inputAmount).quotient)
         const amountOut = toHex(trade.minimumAmountOut(options.slippageTolerance, outputAmount).quotient)
+        const swapRecipient = managerMustCustody ? options.managerAddress : recipient
 
         if (route.pools.length === 1) {
           const calldata =
@@ -96,7 +105,7 @@ export abstract class SwapManager {
                   route.tierChoicesList[0],
                   amountIn,
                   amountOut,
-                  recipient,
+                  swapRecipient,
                   options.fromAccount,
                   options.toAccount
                 ])
@@ -106,7 +115,7 @@ export abstract class SwapManager {
                   route.tierChoicesList[0],
                   amountOut,
                   amountIn,
-                  recipient,
+                  swapRecipient,
                   options.fromAccount,
                   options.toAccount
                 ])
@@ -119,7 +128,7 @@ export abstract class SwapManager {
                   path,
                   amountIn,
                   amountOut,
-                  recipient,
+                  swapRecipient,
                   options.fromAccount,
                   options.toAccount
                 ])
@@ -127,7 +136,7 @@ export abstract class SwapManager {
                   path,
                   amountOut,
                   amountIn,
-                  recipient,
+                  swapRecipient,
                   options.fromAccount,
                   options.toAccount
                 ])
@@ -137,8 +146,11 @@ export abstract class SwapManager {
     }
 
     // unwrap
-    if (routerMustCustody) {
-      calldatas.push(Payments.encodeUnwrapWETH(totalAmountOut.quotient, recipient))
+    if (managerMustCustody) {
+      const amountOut = JSBI.greaterThan(totalAmountOut.quotient, SWAP_AMOUNT_TOLERANCE)
+        ? JSBI.subtract(totalAmountOut.quotient, SWAP_AMOUNT_TOLERANCE)
+        : JSBI.BigInt(0)
+      calldatas.push(Payments.encodeUnwrapWETH(amountOut, recipient))
     }
 
     // refund

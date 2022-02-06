@@ -12,6 +12,7 @@ export enum LimitOrderType {
   ZeroForOne = 1,
   OneForZero = 2
 }
+export const SWAP_AMOUNT_TOLERANCE = JSBI.BigInt('100')
 
 // Contract defaults
 export const DEFAULT_TICK_SPACING = 200
