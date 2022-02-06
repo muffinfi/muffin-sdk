@@ -3,8 +3,6 @@ import invariant from 'tiny-invariant'
 import { Trade } from '../entities/trade'
 import { getAmountInDistribution, Hop } from './getPriceImpact'
 
-const ONE_HUNDRED_PERCENT = new Percent(1, 1)
-
 /**
  * TODO: seems not making sense. pending to delete
  */
@@ -21,10 +19,10 @@ export function getRealizedFee<TInput extends Currency, TOutput extends Currency
   for (const [i, swap] of trade.swaps.entries()) {
     invariant(hops[i].length === swap.route.pools.length, 'INVALID_HOPS')
 
-    let routeGamma = ONE_HUNDRED_PERCENT
+    let routeGamma = new Percent(1, 1)
     for (const [j, pool] of swap.route.pools.entries()) {
       let poolGamma = new Percent(0)
-      for (const [tierId, amtInPercent] of getAmountInDistribution(hops[i][j]).entries()) {
+      for (const [tierId, amtInPercent] of getAmountInDistribution(hops[i][j], pool).entries()) {
         const sqrtGamma = pool.tiers[tierId].sqrtGamma
         const gamma = new Percent(sqrtGamma * sqrtGamma, 1e10)
         poolGamma = poolGamma.add(gamma.multiply(amtInPercent))
@@ -37,7 +35,7 @@ export function getRealizedFee<TInput extends Currency, TOutput extends Currency
     overallGamma = overallGamma.add(routeGamma.multiply(swapPercent))
   }
 
-  const percent = ONE_HUNDRED_PERCENT.subtract(overallGamma)
+  const percent = new Percent(1, 1).subtract(overallGamma)
   const amount = CurrencyAmount.fromRawAmount(trade.inputAmount.currency, trade.inputAmount.multiply(percent).quotient)
 
   return { percent, amount }
