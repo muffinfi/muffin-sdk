@@ -1,15 +1,15 @@
-import JSBI from 'jsbi'
 import { Interface } from '@ethersproject/abi'
-import { Currency, CurrencyAmount, Percent, TradeType, validateAndParseAddress } from '@uniswap/sdk-core'
+import { BigintIsh, Currency, CurrencyAmount, Percent, TradeType, validateAndParseAddress } from '@uniswap/sdk-core'
+import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { abi as SwapManagerABI } from '../artifacts/contracts/periphery/base/SwapManager.sol/SwapManager.json'
+import { SWAP_AMOUNT_TOLERANCE } from '../constants'
 import { Trade } from '../entities/trade'
 import { MethodParameters, toHex } from '../utils/calldata'
 import { encodeRouteToPath } from './encodeRouteToPath'
 import { Multicall } from './multicall'
 import { Payments } from './payments'
 import { PermitOptions, SelfPermit } from './selfPermit'
-import { SWAP_AMOUNT_TOLERANCE } from '../constants'
 
 /**
  * Options for producing the arguments to send calls to the manager.
@@ -19,6 +19,7 @@ export interface SwapOptions {
   fromAccount: boolean //             Use internal account to pay the swap input token
   toAccount: boolean //               Send swap output token to recipient internal account
   slippageTolerance: Percent //       How much the execution price is allowed to move unfavorably from the trade execution price.
+  deadline: BigintIsh //              When the transaction expires, in epoch seconds.
   inputTokenPermit?: PermitOptions // The optional permit parameters for spending the input.
   managerAddress?: string //          Address of the swap manager contract
 }
@@ -88,7 +89,7 @@ export abstract class SwapManager {
     }
 
     const recipient = validateAndParseAddress(options.recipient)
-    // const deadline = toHex(options.deadline)
+    const deadline = toHex(options.deadline)
 
     for (const trade of trades) {
       for (const { route, inputAmount, outputAmount } of trade.swaps) {
@@ -107,7 +108,8 @@ export abstract class SwapManager {
                   amountOut,
                   swapRecipient,
                   options.fromAccount,
-                  options.toAccount
+                  options.toAccount,
+                  deadline
                 ])
               : SwapManager.INTERFACE.encodeFunctionData('exactOutSingle', [
                   route.tokenPath[0].address,
@@ -117,7 +119,8 @@ export abstract class SwapManager {
                   amountIn,
                   swapRecipient,
                   options.fromAccount,
-                  options.toAccount
+                  options.toAccount,
+                  deadline
                 ])
           calldatas.push(calldata)
         } else {
@@ -130,7 +133,8 @@ export abstract class SwapManager {
                   amountOut,
                   swapRecipient,
                   options.fromAccount,
-                  options.toAccount
+                  options.toAccount,
+                  deadline
                 ])
               : SwapManager.INTERFACE.encodeFunctionData('exactOut', [
                   path,
@@ -138,7 +142,8 @@ export abstract class SwapManager {
                   amountIn,
                   swapRecipient,
                   options.fromAccount,
-                  options.toAccount
+                  options.toAccount,
+                  deadline
                 ])
           calldatas.push(calldata)
         }
