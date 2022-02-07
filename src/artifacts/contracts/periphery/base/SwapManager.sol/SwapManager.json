@@ -5,6 +5,11 @@
   "abi": [
     {
       "inputs": [],
+      "name": "DeadlinePassed",
+      "type": "error"
+    },
+    {
+      "inputs": [],
       "name": "FailedTransfer",
       "type": "error"
     },
@@ -136,6 +141,11 @@
           "internalType": "bool",
           "name": "toAccount",
           "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
         }
       ],
       "name": "exactIn",
@@ -190,6 +200,11 @@
           "internalType": "bool",
           "name": "toAccount",
           "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
         }
       ],
       "name": "exactInSingle",
@@ -234,6 +249,11 @@
           "internalType": "bool",
           "name": "toAccount",
           "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
         }
       ],
       "name": "exactOut",
@@ -288,6 +308,11 @@
           "internalType": "bool",
           "name": "toAccount",
           "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
         }
       ],
       "name": "exactOutSingle",

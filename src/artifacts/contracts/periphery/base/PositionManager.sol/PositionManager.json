@@ -268,7 +268,7 @@
       ],
       "name": "createPool",
       "outputs": [],
-      "stateMutability": "nonpayable",
+      "stateMutability": "payable",
       "type": "function"
     },
     {
@@ -934,7 +934,7 @@
       ],
       "name": "setLimitOrderType",
       "outputs": [],
-      "stateMutability": "nonpayable",
+      "stateMutability": "payable",
       "type": "function"
     },
     {
