@@ -73,20 +73,25 @@ export interface NFTPermitOptions {
 export abstract class PositionManager {
   public static INTERFACE = new Interface(PositionManagerABI)
 
-  private static encodeCreate(pool: Pool) {
-    return PositionManager.INTERFACE.encodeFunctionData('createPool', [
+  public static createCallParameters(pool: Pool, useNative: NativeCurrency | undefined): MethodParameters {
+    const calldata = PositionManager.INTERFACE.encodeFunctionData('createPool', [
       pool.token0.address,
       pool.token1.address,
       pool.tiers[0].sqrtGamma,
       toHex(pool.tiers[0].sqrtPriceX72)
     ])
-  }
 
-  public static createCallParameters(pool: Pool): MethodParameters {
-    return {
-      calldata: this.encodeCreate(pool),
-      value: toHex(0)
+    // if using native eth, calculate msg.value needed to create pool
+    let value: string = toHex(0)
+    if (useNative) {
+      const wrapped = useNative.wrapped
+      invariant(pool.token0.equals(wrapped) || pool.token1.equals(wrapped), 'NO_WETH')
+      value = pool.token0.equals(wrapped)
+        ? toHex(pool.token0AmountForCreatePool.quotient)
+        : toHex(pool.token1AmountForCreatePool.quotient)
     }
+
+    return { calldata, value }
   }
 
   public static addCallParameters(position: Position, options: AddLiquidityOptions): MethodParameters {
@@ -94,14 +99,25 @@ export abstract class PositionManager {
 
     const calldatas: string[] = []
 
+    // permits if necessary
+    if (options.token0Permit) {
+      calldatas.push(SelfPermit.encodePermit(position.pool.token0, options.token0Permit))
+    }
+    if (options.token1Permit) {
+      calldatas.push(SelfPermit.encodePermit(position.pool.token1, options.token1Permit))
+    }
+
     // create pool if needed
+    let value: string = toHex(0)
     if (isMint(options) && options.createPool) {
-      calldatas.push(this.encodeCreate(position.pool))
+      const params = this.createCallParameters(position.pool, options.useNative)
+      calldatas.push(params.calldata)
+      value = params.value
 
       /**
        * Subtract position's liquidity with a base that is used to create pool.
        * Note that base liquidity is taking more tokens than it should, as it's using simple xy=k invariant
-       * This can makes users have not enough tokens to mint liquidity, which is a potential bug
+       * This will overall charge users more tokens than they desire to input, though small but could be a potential bug
        */
       const liquidityD8 = JSBI.subtract(position.liquidityD8, JSBI.BigInt(BASE_LIQUIDITY_D8))
       invariant(JSBI.greaterThan(liquidityD8, ZERO), 'ZERO_LIQUIDITY_AFTER_CREATE')
@@ -115,14 +131,6 @@ export abstract class PositionManager {
         settlementSnapshotId: position.settlementSnapshotId,
         settled: position.settled
       })
-    }
-
-    // permits if necessary
-    if (options.token0Permit) {
-      calldatas.push(SelfPermit.encodePermit(position.pool.token0, options.token0Permit))
-    }
-    if (options.token1Permit) {
-      calldatas.push(SelfPermit.encodePermit(position.pool.token1, options.token1Permit))
     }
 
     // get amounts
@@ -159,16 +167,17 @@ export abstract class PositionManager {
           ])
     )
 
-    // calcalute msg.value if neccessary
-    let value = toHex(0)
+    // calcalute msg.value if using native eth
     if (options.useNative) {
       const wrapped = options.useNative.wrapped
       const wrappedValue = position.pool.token0.equals(wrapped) ? amount0Desired : amount1Desired
       invariant(position.pool.token0.equals(wrapped) || position.pool.token1.equals(wrapped), 'NO_WETH')
 
       // we only need to refund if we're actually sending >0 ETH
-      if (JSBI.greaterThan(wrappedValue, ZERO)) calldatas.push(Payments.encodeRefundETH())
-      value = toHex(wrappedValue)
+      if (JSBI.greaterThan(wrappedValue, ZERO)) {
+        calldatas.push(Payments.encodeRefundETH())
+        value = toHex(JSBI.add(JSBI.BigInt(value), wrappedValue))
+      }
     }
 
     return {

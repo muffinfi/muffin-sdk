@@ -1,9 +1,11 @@
 import { defaultAbiCoder } from '@ethersproject/abi'
 import { keccak256 } from '@ethersproject/keccak256'
-import { Token } from '@uniswap/sdk-core'
+import { CurrencyAmount, Token } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { Tier, TierChainData } from './tier'
+import { BASE_LIQUIDITY_D8 } from '../constants'
+import { ceilDiv } from '../utils/ceilDiv'
 
 export class Pool {
   public readonly token0: Token
@@ -68,5 +70,26 @@ export class Pool {
     return this.tiers.slice(1).reduce((acc, tier) => {
       return JSBI.greaterThan(tier.liquidity, acc.liquidity) ? tier : acc
     }, this.tiers[0])
+  }
+
+  /**
+   * Return the amount of token0 required to create pool
+   */
+  public get token0AmountForCreatePool(): CurrencyAmount<Token> {
+    // i.e. (baseLiquidityD8 << 80) / sqrtPrice
+    const amount0 = ceilDiv(JSBI.leftShift(JSBI.BigInt(BASE_LIQUIDITY_D8), JSBI.BigInt(80)), this.tiers[0].sqrtPriceX72)
+    return CurrencyAmount.fromRawAmount(this.token0, amount0)
+  }
+
+  /**
+   * Return the amount of token1 required to create pool
+   */
+  public get token1AmountForCreatePool(): CurrencyAmount<Token> {
+    // i.e. (baseLiquidityD8 * sqrtPrice) / (1 << 64)
+    const amount1 = ceilDiv(
+      JSBI.multiply(JSBI.BigInt(BASE_LIQUIDITY_D8), this.tiers[0].sqrtPriceX72),
+      JSBI.leftShift(JSBI.BigInt(1), JSBI.BigInt(64))
+    )
+    return CurrencyAmount.fromRawAmount(this.token1, amount1)
   }
 }
