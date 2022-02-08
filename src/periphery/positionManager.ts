@@ -205,7 +205,6 @@ export abstract class PositionManager {
       liquidityD8: options.liquidityPercentage.multiply(position.liquidityD8).quotient
     })
     const liquidityD8 = _partialPosition.liquidityD8
-    invariant(JSBI.greaterThan(liquidityD8, ZERO), 'ZERO_LIQUIDITY')
 
     // adjust for slippage tolerance
     const { amount0: amount0Min, amount1: amount1Min } = _partialPosition.burnAmountsWithSlippage(
