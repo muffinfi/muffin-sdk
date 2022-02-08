@@ -56,7 +56,6 @@ export interface RemoveLiquidityOptions {
   slippageTolerance: Percent //   How much the pool price is allowed to move.
   withdrawalRecipient: string
   collectAllFees: boolean
-  isSettledPosition?: boolean
   permit?: NFTPermitOptions //    The optional permit of the token ID being exited, in case the exit transaction is being sent by an account that does not own the NFT
 }
 
@@ -235,7 +234,7 @@ export abstract class PositionManager {
           amount1Min: toHex(amount1Min),
           withdrawTo: validateAndParseAddress(options.withdrawalRecipient),
           collectAllFees: options.collectAllFees,
-          settled: options.isSettledPosition === true
+          settled: position.settled
         }
       ])
     )
