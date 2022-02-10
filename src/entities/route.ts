@@ -84,4 +84,12 @@ export class Route<TInput extends Currency, TOutput extends Currency> {
 
     return (this._impreciseMidPrice = new Price(this.input, this.output, price.denominator, price.numerator))
   }
+
+  public equals(other: Route<Currency, Currency>): boolean {
+    if (this.pools.length !== other.pools.length) return false
+    if (this.pools.some((pool, i) => !pool.equals(other.pools[i]))) return false
+    if (this.tierChoicesList.length !== other.tierChoicesList.length) return false
+    if (this.tierChoicesList.some((tierChoices, i) => tierChoices !== other.tierChoicesList[i])) return false
+    return this.input.equals(other.input) && this.output.equals(other.output)
+  }
 }
