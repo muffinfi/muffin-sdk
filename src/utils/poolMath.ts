@@ -31,7 +31,7 @@ export abstract class PoolMath {
    * Computes the maximum amount of liquidity received for a given amount of token0, token1,
    * and the prices at the tick boundaries.
    */
-  public static maxOutputLiquidityD8ForAmounts(
+  public static maxOutputLiquidityForAmounts(
     sqrtPCurrent: JSBI,
     sqrtPLower: JSBI,
     sqrtPUpper: JSBI,
@@ -58,9 +58,17 @@ export abstract class PoolMath {
       JSBI.multiply(JSBI.subtract(sqrtPUpper, sqrtPCurrent), Q72)
     )
     const liquidity1 = JSBI.divide(JSBI.multiply(amount1, Q72), JSBI.subtract(sqrtPCurrent, sqrtPLower))
-    const liquidity = JSBI.lessThan(liquidity0, liquidity1) ? liquidity0 : liquidity1
+    return JSBI.lessThan(liquidity0, liquidity1) ? liquidity0 : liquidity1
+  }
 
-    return toD8(liquidity)
+  /**
+   * Computes the maximum amount of liquidityD8 received for a given amount of token0, token1,
+   * and the prices at the tick boundaries.
+   */
+  public static maxOutputLiquidityD8ForAmounts(
+    ...args: Parameters<typeof PoolMath.maxOutputLiquidityForAmounts>
+  ): JSBI {
+    return toD8(this.maxOutputLiquidityForAmounts(...args))
   }
 
   /**
