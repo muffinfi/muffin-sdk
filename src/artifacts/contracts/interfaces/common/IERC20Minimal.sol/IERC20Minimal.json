@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "IERC20",
-  "sourceName": "contracts/interfaces/common/IERC20.sol",
+  "contractName": "IERC20Minimal",
+  "sourceName": "contracts/interfaces/common/IERC20Minimal.sol",
   "abi": [
     {
       "inputs": [

@@ -5,11 +5,6 @@
   "abi": [
     {
       "inputs": [],
-      "name": "FailedTransfer",
-      "type": "error"
-    },
-    {
-      "inputs": [],
       "name": "FailedTransferETH",
       "type": "error"
     },
