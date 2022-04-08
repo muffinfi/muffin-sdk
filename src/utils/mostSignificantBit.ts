@@ -4,7 +4,7 @@ import { MaxUint256, TWO, ZERO } from '../constants'
 
 const POWERS_OF_2 = [128, 64, 32, 16, 8, 4, 2, 1].map((pow: number): [number, JSBI] => [
   pow,
-  JSBI.exponentiate(TWO, JSBI.BigInt(pow))
+  JSBI.exponentiate(TWO, JSBI.BigInt(pow)),
 ])
 
 export function mostSignificantBit(x: JSBI): number {

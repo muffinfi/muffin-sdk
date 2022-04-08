@@ -3,8 +3,8 @@ import { Currency } from '@uniswap/sdk-core'
 import { Route } from '../entities/route'
 
 export function encodeRouteToPath(route: Route<Currency, Currency>, exactOutput: boolean): string {
-  let types = []
-  let values = []
+  const types = []
+  const values = []
   let token = route.input.wrapped
   for (const [i, pool] of route.pools.entries()) {
     if (i === 0) {

@@ -3,9 +3,9 @@ import { keccak256 } from '@ethersproject/keccak256'
 import { CurrencyAmount, Token } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
-import { Tier, TierChainData } from './tier'
 import { BASE_LIQUIDITY_D8 } from '../constants'
 import { ceilDiv } from '../utils/ceilDiv'
+import { Tier, TierChainData } from './tier'
 
 export class Pool {
   public readonly token0: Token
@@ -22,13 +22,13 @@ export class Pool {
   }
 
   static fromChainData(tokenA: Token, tokenB: Token, tickSpacing: number, tierDataList: TierChainData[]) {
-    const tiers = tierDataList.map(tierData => Tier.fromChainData(tokenA, tokenB, tierData))
+    const tiers = tierDataList.map((tierData) => Tier.fromChainData(tokenA, tokenB, tierData))
     return new Pool(tokenA, tokenB, tickSpacing, tiers)
   }
 
   public getTierBySqrtGamma(sqrtGamma: number | undefined): [number, Tier | undefined] {
     if (sqrtGamma == null) return [-1, undefined]
-    const tier = this.tiers.find(tier => tier.sqrtGamma === sqrtGamma)
+    const tier = this.tiers.find((tier) => tier.sqrtGamma === sqrtGamma)
     const tierId = tier ? this.tiers.indexOf(tier) : -1
     return [tierId, tier]
   }

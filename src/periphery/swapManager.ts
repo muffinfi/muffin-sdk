@@ -44,11 +44,11 @@ export abstract class SwapManager {
 
     // All trades should have the same starting and ending token.
     invariant(
-      trades.every(trade => trade.inputAmount.currency.wrapped.equals(tokenIn)),
+      trades.every((trade) => trade.inputAmount.currency.wrapped.equals(tokenIn)),
       'TOKEN_IN_DIFF'
     )
     invariant(
-      trades.every(trade => trade.outputAmount.currency.wrapped.equals(tokenOut)),
+      trades.every((trade) => trade.outputAmount.currency.wrapped.equals(tokenOut)),
       'TOKEN_OUT_DIFF'
     )
 
@@ -109,7 +109,7 @@ export abstract class SwapManager {
                   swapRecipient,
                   options.fromAccount,
                   options.toAccount,
-                  deadline
+                  deadline,
                 ])
               : SwapManager.INTERFACE.encodeFunctionData('exactOutSingle', [
                   route.tokenPath[0].address,
@@ -120,7 +120,7 @@ export abstract class SwapManager {
                   swapRecipient,
                   options.fromAccount,
                   options.toAccount,
-                  deadline
+                  deadline,
                 ])
           calldatas.push(calldata)
         } else {
@@ -134,7 +134,7 @@ export abstract class SwapManager {
                   swapRecipient,
                   options.fromAccount,
                   options.toAccount,
-                  deadline
+                  deadline,
                 ])
               : SwapManager.INTERFACE.encodeFunctionData('exactOut', [
                   path,
@@ -143,7 +143,7 @@ export abstract class SwapManager {
                   swapRecipient,
                   options.fromAccount,
                   options.toAccount,
-                  deadline
+                  deadline,
                 ])
           calldatas.push(calldata)
         }
@@ -165,7 +165,7 @@ export abstract class SwapManager {
 
     return {
       calldata: Multicall.encodeMulticall(calldatas),
-      value: toHex(totalTxValue.quotient)
+      value: toHex(totalTxValue.quotient),
     }
   }
 }

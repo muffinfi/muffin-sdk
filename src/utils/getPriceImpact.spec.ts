@@ -9,7 +9,7 @@ import { getPriceImpact } from './getPriceImpact'
 function token({
   sortOrder,
   decimals = 18,
-  chainId = 1
+  chainId = 1,
 }: {
   sortOrder: number
   decimals?: number
@@ -38,21 +38,21 @@ describe('getPriceImpact', () => {
     nextTickBelow: MIN_TICK,
     nextTickAbove: MAX_TICK,
     feeGrowthGlobal0: '0',
-    feeGrowthGlobal1: '0'
+    feeGrowthGlobal1: '0',
   }
 
   const pool01 = Pool.fromChainData(token0, token1, 1, [defaultTierData])
 
   const pool12 = Pool.fromChainData(token1, token2, 1, [
     defaultTierData,
-    { ...defaultTierData, sqrtPrice: JSBI.multiply(Q72, JSBI.BigInt(2)) }
+    { ...defaultTierData, sqrtPrice: JSBI.multiply(Q72, JSBI.BigInt(2)) },
   ])
 
   const trade = Trade.createUncheckedTrade({
     tradeType: TradeType.EXACT_INPUT,
     route: new Route([pool01, pool12], [0x3f, 0x3f], token0, token2),
     inputAmount: CurrencyAmount.fromRawAmount(token0, 100),
-    outputAmount: CurrencyAmount.fromRawAmount(token2, 100)
+    outputAmount: CurrencyAmount.fromRawAmount(token2, 100),
   })
 
   it('no price impact', () => {

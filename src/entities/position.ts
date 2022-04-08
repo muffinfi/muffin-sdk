@@ -41,7 +41,7 @@ export class Position {
     liquidityD8,
     limitOrderType,
     settlementSnapshotId,
-    settled
+    settled,
   }: {
     pool: Pool
     tierId: number

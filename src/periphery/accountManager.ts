@@ -28,7 +28,7 @@ export abstract class AccountManager {
   private static depositCalldatas(
     currencyAmount: CurrencyAmount<Currency>,
     options: DepositCallOptions // options.recipient should be already validated
-  ): { calldatas: string[], value: string | null } {
+  ): { calldatas: string[]; value: string | null } {
     // Amount should be greater then zero.
     invariant(currencyAmount.greaterThan(0), 'DEPOSIT_AMOUNT')
 
@@ -39,11 +39,13 @@ export abstract class AccountManager {
       calldatas.push(SelfPermit.encodePermit(currencyAmount.currency, options.inputTokenPermit))
     }
 
-    calldatas.push(AccountManager.INTERFACE.encodeFunctionData('deposit', [
-      options.recipient,
-      currencyAmount.currency.isNative ? currencyAmount.currency.wrapped.address : currencyAmount.currency.address,
-      toHex(currencyAmount.quotient),
-    ]))
+    calldatas.push(
+      AccountManager.INTERFACE.encodeFunctionData('deposit', [
+        options.recipient,
+        currencyAmount.currency.isNative ? currencyAmount.currency.wrapped.address : currencyAmount.currency.address,
+        toHex(currencyAmount.quotient),
+      ])
+    )
 
     const value = currencyAmount.currency.isNative ? toHex(currencyAmount.quotient) : null
 
@@ -66,10 +68,7 @@ export abstract class AccountManager {
           toHex(currencyAmount.quotient),
         ]),
         // Then unwrap and send to recipient
-        AccountManager.INTERFACE.encodeFunctionData('unwrapWETH', [
-          toHex(currencyAmount.quotient),
-          options.recipient,
-        ]),
+        AccountManager.INTERFACE.encodeFunctionData('unwrapWETH', [toHex(currencyAmount.quotient), options.recipient]),
       ]
     }
 
@@ -121,8 +120,8 @@ export abstract class AccountManager {
       managerAddress: validateAndParseAddress(options.managerAddress),
     }
 
-    const { calldatas, value } = currencyAmounts
-      .reduce((acc, currencyAmount) => {
+    const { calldatas, value } = currencyAmounts.reduce(
+      (acc, currencyAmount) => {
         const inputTokenPermit = currencyAmount.currency.isToken
           ? options.inputTokenPermits?.[currencyAmount.currency.address]
           : undefined
@@ -135,10 +134,12 @@ export abstract class AccountManager {
           acc.value = toHex(JSBI.add(JSBI.BigInt(acc.value), JSBI.BigInt(value)))
         }
         return acc
-      }, { calldatas: [], value: toHex(0) } as {
-        calldatas: string[],
+      },
+      { calldatas: [], value: toHex(0) } as {
+        calldatas: string[]
         value: string
-      })
+      }
+    )
 
     return {
       calldata: Multicall.encodeMulticall(calldatas),

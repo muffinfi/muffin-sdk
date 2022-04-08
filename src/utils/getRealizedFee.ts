@@ -1,4 +1,4 @@
-import { Currency, Percent, TradeType, CurrencyAmount } from '@uniswap/sdk-core'
+import { Currency, CurrencyAmount, Percent, TradeType } from '@uniswap/sdk-core'
 import invariant from 'tiny-invariant'
 import { Trade } from '../entities/trade'
 import { getAmountInDistribution, Hop } from './getPriceImpact'

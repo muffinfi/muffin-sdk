@@ -10,7 +10,7 @@ export const BASE_LIQUIDITY = 100 * 2 ** 8
 export enum LimitOrderType {
   NotLimitOrder = 0,
   ZeroForOne = 1,
-  OneForZero = 2
+  OneForZero = 2,
 }
 export const SWAP_AMOUNT_TOLERANCE = JSBI.BigInt('100')
 

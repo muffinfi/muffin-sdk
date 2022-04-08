@@ -21,11 +21,11 @@ export abstract class SwapQuoter {
             route.tokenPath[0].address,
             route.tokenPath[1].address,
             route.tierChoicesList[0],
-            signedAmount.quotient.toString()
+            signedAmount.quotient.toString(),
           ])
         : SwapQuoter.INTERFACE.encodeFunctionData('quote', [
             encodeRouteToPath(route, tradeType === TradeType.EXACT_OUTPUT),
-            signedAmount.quotient.toString()
+            signedAmount.quotient.toString(),
           ])
 
     return { calldata, value: toHex(0) }
@@ -40,7 +40,7 @@ export abstract class SwapQuoter {
 
     const calldata = SwapQuoter.INTERFACE.encodeFunctionData('simulate', [
       encodeRouteToPath(route, tradeType === TradeType.EXACT_OUTPUT),
-      signedAmount.quotient.toString()
+      signedAmount.quotient.toString(),
     ])
 
     return { calldata, value: toHex(0) }

@@ -20,7 +20,7 @@ export interface Hop {
 export function getAmountInDistribution(hop: Hop, pool: Pool): Percent[] {
   invariant(hop.tierAmountsIn.length <= pool.tiers.length, 'HOP_TIER_AMOUNTS_IN')
 
-  const tierAmtsIn = hop.tierAmountsIn.map(amtIn => JSBI.BigInt(amtIn.toString()))
+  const tierAmtsIn = hop.tierAmountsIn.map((amtIn) => JSBI.BigInt(amtIn.toString()))
   const sumAmtIn = tierAmtsIn.reduce((acc, amtIn) => JSBI.add(acc, amtIn), ZERO)
 
   // if zero sumAmtIn, distribute 100% to tier with most liquidity
@@ -30,7 +30,7 @@ export function getAmountInDistribution(hop: Hop, pool: Pool): Percent[] {
     return tierAmtsIn.map((_, i) => (i === tierId ? new Percent('1', '1') : new Percent('0', '1')))
   }
 
-  return tierAmtsIn.map(amtIn => new Percent(amtIn, sumAmtIn))
+  return tierAmtsIn.map((amtIn) => new Percent(amtIn, sumAmtIn))
 }
 
 /**

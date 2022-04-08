@@ -25,7 +25,7 @@ export class Route<TInput extends Currency, TOutput extends Currency> {
 
     //  check all pools on same chain
     const chainId = pools[0].chainId
-    const allSameChain = pools.every(pool => pool.chainId === chainId)
+    const allSameChain = pools.every((pool) => pool.chainId === chainId)
     invariant(allSameChain, 'CHAIN_IDS')
 
     // check all first and last pools correct with input and output tokens
@@ -35,7 +35,7 @@ export class Route<TInput extends Currency, TOutput extends Currency> {
 
     // check tier choices
     invariant(
-      tierChoicesList.every(choices => choices > 0 && choices <= 0b111111),
+      tierChoicesList.every((choices) => choices > 0 && choices <= 0b111111),
       'TIER_CHOICES'
     )
     invariant(tierChoicesList.length === pools.length, 'TIER_CHOICES_COUNT')

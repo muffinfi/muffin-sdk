@@ -113,9 +113,10 @@ export class Tier {
     return this.fee.multiply(100)
   }
 
-  public sqrtPriceAfterSlippage(
-    slippageTolerance: Percent
-  ): { sqrtPriceSlippageLower: JSBI; sqrtPriceSlippageUpper: JSBI } {
+  public sqrtPriceAfterSlippage(slippageTolerance: Percent): {
+    sqrtPriceSlippageLower: JSBI
+    sqrtPriceSlippageUpper: JSBI
+  } {
     const priceLower = this.token0Price.asFraction.multiply(new Percent(1).subtract(slippageTolerance))
     const priceUpper = this.token0Price.asFraction.multiply(slippageTolerance.add(1))
 
@@ -127,7 +128,7 @@ export class Tier {
 
     return {
       sqrtPriceSlippageLower: sqrtPLower,
-      sqrtPriceSlippageUpper: sqrtPUpper
+      sqrtPriceSlippageUpper: sqrtPUpper,
     }
   }
 }

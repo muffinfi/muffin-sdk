@@ -10,7 +10,7 @@ export abstract class Payments {
   public static encodeUnwrapWETH(amountMinimum: JSBI, recipient: string): string {
     return Payments.INTERFACE.encodeFunctionData('unwrapWETH', [
       toHex(amountMinimum),
-      validateAndParseAddress(recipient)
+      validateAndParseAddress(recipient),
     ])
   }
 

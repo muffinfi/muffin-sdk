@@ -94,7 +94,7 @@ export abstract class PoolMath {
 
     return {
       amount0: this.getAmount0Delta(sqrtPUpper, sqrtPExit, fromD8(liquidityD8), true),
-      amount1: this.getAmount1Delta(sqrtPLower, sqrtPExit, fromD8(liquidityD8), true)
+      amount1: this.getAmount1Delta(sqrtPLower, sqrtPExit, fromD8(liquidityD8), true),
     }
   }
 }

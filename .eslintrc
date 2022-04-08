@@ -1,0 +1,43 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "ignorePatterns": [
+    "src/artifacts",
+    "node_modules",
+    "dist",
+    ".DS_Store",
+    ".idea/",
+    ".vscode/",
+    "yarn.lock"
+  ],
+  "extends": [
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "rules": {
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "prettier/prettier": "warn",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/ban-ts-ignore": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "object-shorthand": [
+      "error",
+      "always"
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "ethers",
+            "message": "Please import from '@ethersproject/module' directly to support tree-shaking."
+          }
+        ]
+      }
+    ]
+  }
+}

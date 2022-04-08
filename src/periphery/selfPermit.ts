@@ -36,7 +36,7 @@ export abstract class SelfPermit {
           toHex(options.expiry),
           options.v,
           options.r,
-          options.s
+          options.s,
         ])
       : SelfPermit.INTERFACE.encodeFunctionData('selfPermit', [
           token.address,
@@ -44,7 +44,7 @@ export abstract class SelfPermit {
           toHex(options.deadline),
           options.v,
           options.r,
-          options.s
+          options.s,
         ])
   }
 }

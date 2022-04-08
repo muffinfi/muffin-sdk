@@ -3,7 +3,7 @@ import { BigintIsh, NativeCurrency, Percent, validateAndParseAddress } from '@un
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { abi as PositionManagerABI } from '../artifacts/contracts/periphery/base/PositionManager.sol/PositionManager.json'
-import { BASE_LIQUIDITY_D8, ZERO } from '../constants'
+import { BASE_LIQUIDITY_D8, LimitOrderType, ZERO } from '../constants'
 import { Pool } from '../entities/pool'
 import { Position } from '../entities/position'
 import { MethodParameters, toHex } from '../utils/calldata'
@@ -45,7 +45,7 @@ export type AddLiquidityOptions = MintOptions | IncreaseOptions
 
 // type guard
 function isMint(options: AddLiquidityOptions): options is MintOptions {
-  return Object.keys(options).some(k => k === 'recipient')
+  return Object.keys(options).some((k) => k === 'recipient')
 }
 
 // --------------------------------------
@@ -69,6 +69,13 @@ export interface NFTPermitOptions {
 
 // --------------------------------------
 
+export interface SetLimitOrderTypeOptions {
+  tokenId: BigintIsh //             Id of the position NFT
+  limitOrderType: LimitOrderType // Direction of limit order (0: N/A, 1: zero->one, 2: one->zero)
+}
+
+// --------------------------------------
+
 export abstract class PositionManager {
   public static INTERFACE = new Interface(PositionManagerABI)
 
@@ -77,7 +84,7 @@ export abstract class PositionManager {
       pool.token0.address,
       pool.token1.address,
       pool.tiers[0].sqrtGamma,
-      toHex(pool.tiers[0].sqrtPriceX72)
+      toHex(pool.tiers[0].sqrtPriceX72),
     ])
 
     // if using native eth, calculate msg.value needed to create pool
@@ -128,7 +135,7 @@ export abstract class PositionManager {
         liquidityD8,
         limitOrderType: position.limitOrderType,
         settlementSnapshotId: position.settlementSnapshotId,
-        settled: position.settled
+        settled: position.settled,
       })
     }
 
@@ -151,8 +158,8 @@ export abstract class PositionManager {
               amount0Min: toHex(amount0Min),
               amount1Min: toHex(amount1Min),
               recipient: validateAndParseAddress(options.recipient),
-              useAccount: options.useAccount
-            }
+              useAccount: options.useAccount,
+            },
           ])
         : PositionManager.INTERFACE.encodeFunctionData('addLiquidity', [
             {
@@ -161,8 +168,8 @@ export abstract class PositionManager {
               amount1Desired: toHex(amount1Desired),
               amount0Min: toHex(amount0Min),
               amount1Min: toHex(amount1Min),
-              useAccount: options.useAccount
-            }
+              useAccount: options.useAccount,
+            },
           ])
     )
 
@@ -181,7 +188,7 @@ export abstract class PositionManager {
 
     return {
       calldata: Multicall.encodeMulticall(calldatas),
-      value
+      value,
     }
   }
 
@@ -201,7 +208,7 @@ export abstract class PositionManager {
       tierId: position.tierId,
       tickLower: position.tickLower,
       tickUpper: position.tickUpper,
-      liquidityD8: options.liquidityPercentage.multiply(position.liquidityD8).quotient
+      liquidityD8: options.liquidityPercentage.multiply(position.liquidityD8).quotient,
     })
     const liquidityD8 = _partialPosition.liquidityD8
 
@@ -219,7 +226,7 @@ export abstract class PositionManager {
           toHex(options.permit.deadline),
           options.permit.v,
           options.permit.r,
-          options.permit.s
+          options.permit.s,
         ])
       )
     }
@@ -234,14 +241,14 @@ export abstract class PositionManager {
           amount1Min: toHex(amount1Min),
           withdrawTo: validateAndParseAddress(options.withdrawalRecipient),
           collectAllFees: options.collectAllFees,
-          settled: position.settled
-        }
+          settled: position.settled,
+        },
       ])
     )
 
     return {
       calldata: Multicall.encodeMulticall(calldatas),
-      value: toHex(0)
+      value: toHex(0),
     }
   }
 
@@ -253,17 +260,22 @@ export abstract class PositionManager {
           sender,
           recipient,
           toHex(options.tokenId),
-          options.data
+          options.data,
         ])
       : PositionManager.INTERFACE.encodeFunctionData('safeTransferFrom(address,address,uint256)', [
           sender,
           recipient,
-          toHex(options.tokenId)
+          toHex(options.tokenId),
         ])
 
-    return {
-      calldata: calldata,
-      value: toHex(0)
-    }
+    return { calldata, value: toHex(0) }
+  }
+
+  public static setLimitOrderTypeParameters(options: SetLimitOrderTypeOptions): MethodParameters {
+    const calldata = PositionManager.INTERFACE.encodeFunctionData('setLimitOrderType', [
+      toHex(options.tokenId),
+      toHex(options.limitOrderType),
+    ])
+    return { calldata, value: toHex(0) }
   }
 }

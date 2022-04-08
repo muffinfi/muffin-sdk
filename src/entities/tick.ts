@@ -28,7 +28,7 @@ export class Tick {
     liquidityLowerD8,
     liquidityUpperD8,
     nextBelow,
-    nextAbove
+    nextAbove,
   }: {
     index: number
     liquidityLowerD8: BigintIsh

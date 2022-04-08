@@ -8,7 +8,7 @@ import { getRealizedFee } from './getRealizedFee'
 function token({
   sortOrder,
   decimals = 18,
-  chainId = 1
+  chainId = 1,
 }: {
   sortOrder: number
   decimals?: number
@@ -37,7 +37,7 @@ describe('getRealizedFee', () => {
     nextTickBelow: MIN_TICK,
     nextTickAbove: MAX_TICK,
     feeGrowthGlobal0: '0',
-    feeGrowthGlobal1: '0'
+    feeGrowthGlobal1: '0',
   }
 
   const pool01 = Pool.fromChainData(token0, token1, 1, [{ ...defaultTierData, sqrtGamma: 100000 }, defaultTierData])
@@ -48,12 +48,12 @@ describe('getRealizedFee', () => {
     tradeType: TradeType.EXACT_INPUT,
     route: new Route([pool01, pool12], [0x3f, 0x3f], token0, token2),
     inputAmount: CurrencyAmount.fromRawAmount(token0, 100000),
-    outputAmount: CurrencyAmount.fromRawAmount(token2, 100000)
+    outputAmount: CurrencyAmount.fromRawAmount(token2, 100000),
   })
 
   it('no price impact', () => {
     const { percent, amount } = getRealizedFee(trade, [
-      [{ tierAmountsIn: ['100000', '0'] }, { tierAmountsIn: ['100000', '0'] }]
+      [{ tierAmountsIn: ['100000', '0'] }, { tierAmountsIn: ['100000', '0'] }],
     ])
     expect(percent.toFixed(4)).toEqual('0.0000')
     expect(amount.quotient.toString()).toEqual('0')
@@ -61,7 +61,7 @@ describe('getRealizedFee', () => {
 
   it('has price impact', () => {
     const { percent, amount } = getRealizedFee(trade, [
-      [{ tierAmountsIn: ['50000', '50000'] }, { tierAmountsIn: ['100000', '0'] }]
+      [{ tierAmountsIn: ['50000', '50000'] }, { tierAmountsIn: ['100000', '0'] }],
     ])
     expect(percent.toFixed(4)).toEqual('0.1499')
     expect(amount.quotient.toString()).toEqual('149')

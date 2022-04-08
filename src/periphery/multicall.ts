@@ -6,8 +6,6 @@ export abstract class Multicall {
 
   public static encodeMulticall(calldatas: string | string[]): string {
     if (!Array.isArray(calldatas)) return calldatas
-    return calldatas.length === 1
-      ? calldatas[0]
-      : Multicall.INTERFACE.encodeFunctionData('multicall', [calldatas])
+    return calldatas.length === 1 ? calldatas[0] : Multicall.INTERFACE.encodeFunctionData('multicall', [calldatas])
   }
 }

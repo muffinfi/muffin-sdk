@@ -31,7 +31,7 @@ export class Trade<TInput extends Currency, TOutput extends Currency, TTradeType
    */
   public constructor({
     routes,
-    tradeType
+    tradeType,
   }: {
     routes: {
       route: Route<TInput, TOutput>
@@ -77,9 +77,9 @@ export class Trade<TInput extends Currency, TOutput extends Currency, TTradeType
         {
           inputAmount: constructorArguments.inputAmount,
           outputAmount: constructorArguments.outputAmount,
-          route: constructorArguments.route
-        }
-      ]
+          route: constructorArguments.route,
+        },
+      ],
     })
   }
 
