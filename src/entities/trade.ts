@@ -29,7 +29,7 @@ export class Trade<TInput extends Currency, TOutput extends Currency, TTradeType
   /**
    * Construct a trade by passing in the pre-computed property values
    */
-  private constructor({
+  public constructor({
     routes,
     tradeType
   }: {
