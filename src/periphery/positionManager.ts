@@ -45,7 +45,7 @@ export type AddLiquidityOptions = MintOptions | IncreaseOptions
 
 // type guard
 function isMint(options: AddLiquidityOptions): options is MintOptions {
-  return Object.keys(options).some((k) => k === 'recipient')
+  return 'recipient' in options
 }
 
 // --------------------------------------
@@ -173,6 +173,16 @@ export abstract class PositionManager {
           ])
     )
 
+    // set limit order type if minting a limit range order
+    if (isMint(options) && position.limitOrderType) {
+      calldatas.push(
+        PositionManager.INTERFACE.encodeFunctionData('setLimitOrderType', [
+          toHex(0), // tokenId 0 means using the latest token ID, only feasible with multicall
+          toHex(position.limitOrderType),
+        ])
+      )
+    }
+
     // calcalute msg.value if using native eth
     if (options.useNative) {
       const wrapped = options.useNative.wrapped
@@ -199,6 +209,8 @@ export abstract class PositionManager {
    * @returns The call parameters
    */
   public static removeCallParameters(position: Position, options: RemoveLiquidityOptions): MethodParameters {
+    invariant(options.tokenId > 0, 'ZERO_TOKEN_ID')
+
     const calldatas: string[] = []
     const tokenId = toHex(options.tokenId)
 
@@ -272,6 +284,7 @@ export abstract class PositionManager {
   }
 
   public static setLimitOrderTypeParameters(options: SetLimitOrderTypeOptions): MethodParameters {
+    invariant(options.tokenId > 0, 'ZERO_TOKEN_ID')
     const calldata = PositionManager.INTERFACE.encodeFunctionData('setLimitOrderType', [
       toHex(options.tokenId),
       toHex(options.limitOrderType),
