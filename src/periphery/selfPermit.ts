@@ -22,7 +22,7 @@ export interface AllowedPermitArguments {
 export type PermitOptions = StandardPermitArguments | AllowedPermitArguments
 
 function isAllowedPermit(permitOptions: PermitOptions): permitOptions is AllowedPermitArguments {
-  return 'allowed' in permitOptions
+  return 'nonce' in permitOptions
 }
 
 export abstract class SelfPermit {
