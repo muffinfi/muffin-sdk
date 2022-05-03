@@ -72,14 +72,14 @@ export abstract class PoolMath {
   }
 
   /**
-   * Returns the minimum amounts that must be sent in order to mint the amount of liquidity held by the position at
-   * the current price for the pool
+   * Returns the amounts liquidity held by the position at the current price for the pool
    */
-  public static minInputAmountsForLiquidityD8(
+  public static amountsForLiquidityD8(
     sqrtPCurrent: JSBI,
     sqrtPLower: JSBI,
     sqrtPUpper: JSBI,
-    liquidityD8: JSBI
+    liquidityD8: JSBI,
+    roundUp: boolean
   ): Readonly<{ amount0: JSBI; amount1: JSBI }> {
     invariant(JSBI.lessThan(sqrtPLower, sqrtPUpper), 'SQRT_P')
 
@@ -93,8 +93,21 @@ export abstract class PoolMath {
     }
 
     return {
-      amount0: this.getAmount0Delta(sqrtPUpper, sqrtPExit, fromD8(liquidityD8), true),
-      amount1: this.getAmount1Delta(sqrtPLower, sqrtPExit, fromD8(liquidityD8), true),
+      amount0: this.getAmount0Delta(sqrtPUpper, sqrtPExit, fromD8(liquidityD8), roundUp),
+      amount1: this.getAmount1Delta(sqrtPLower, sqrtPExit, fromD8(liquidityD8), roundUp),
     }
+  }
+
+  /**
+   * Returns the minimum amounts that must be sent in order to mint the amount of liquidity held by the position at
+   * the current price for the pool
+   */
+  public static minInputAmountsForLiquidityD8(
+    sqrtPCurrent: JSBI,
+    sqrtPLower: JSBI,
+    sqrtPUpper: JSBI,
+    liquidityD8: JSBI
+  ): Readonly<{ amount0: JSBI; amount1: JSBI }> {
+    return this.amountsForLiquidityD8(sqrtPCurrent, sqrtPLower, sqrtPUpper, liquidityD8, true)
   }
 }

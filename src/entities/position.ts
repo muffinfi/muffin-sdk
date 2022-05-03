@@ -191,19 +191,20 @@ export class Position {
   }
 
   // Returns the holding amounts of tokens at input price with the amount of liquidity of this position
-  public amountsAtPrice(sqrtPriceX72: JSBI): Readonly<{ amount0: JSBI; amount1: JSBI }> {
-    return PoolMath.minInputAmountsForLiquidityD8(
+  public amountsAtPrice(sqrtPriceX72: JSBI, roundUp: boolean): Readonly<{ amount0: JSBI; amount1: JSBI }> {
+    return PoolMath.amountsForLiquidityD8(
       sqrtPriceX72,
       TickMath.tickToSqrtPriceX72(this.tickLower),
       TickMath.tickToSqrtPriceX72(this.tickUpper),
-      this.liquidityD8
+      this.liquidityD8,
+      roundUp
     )
   }
 
   // Returns the minimum input amounts required to mint the amount of liquidity of this position at current price
   public get mintAmounts(): Readonly<{ amount0: JSBI; amount1: JSBI }> {
     if (this._mintAmounts == null) {
-      this._mintAmounts = this.amountsAtPrice(this.poolTier.sqrtPriceX72)
+      this._mintAmounts = this.amountsAtPrice(this.poolTier.sqrtPriceX72, true)
     }
     return this._mintAmounts
   }
@@ -217,7 +218,8 @@ export class Position {
         this._settleAmounts = this.amountsAtPrice(
           this.limitOrderType === LimitOrderType.ZeroForOne
             ? TickMath.tickToSqrtPriceX72(this.tickUpper)
-            : TickMath.tickToSqrtPriceX72(this.tickLower)
+            : TickMath.tickToSqrtPriceX72(this.tickLower),
+          false
         )
       }
     }
