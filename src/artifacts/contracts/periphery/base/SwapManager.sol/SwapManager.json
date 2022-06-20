@@ -350,7 +350,7 @@
         },
         {
           "internalType": "address",
-          "name": "tokenOut",
+          "name": "",
           "type": "address"
         },
         {
@@ -360,7 +360,7 @@
         },
         {
           "internalType": "uint256",
-          "name": "amountOut",
+          "name": "",
           "type": "uint256"
         },
         {

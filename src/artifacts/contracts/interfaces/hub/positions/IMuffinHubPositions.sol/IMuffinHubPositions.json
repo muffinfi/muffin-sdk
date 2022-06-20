@@ -436,6 +436,12 @@
         },
         {
           "indexed": false,
+          "internalType": "uint256",
+          "name": "amountOutDistribution",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
           "internalType": "uint256[]",
           "name": "tierData",
           "type": "uint256[]"
@@ -774,12 +780,105 @@
           "type": "bytes32"
         }
       ],
+      "name": "getAllTiers",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint128",
+              "name": "liquidity",
+              "type": "uint128"
+            },
+            {
+              "internalType": "uint128",
+              "name": "sqrtPrice",
+              "type": "uint128"
+            },
+            {
+              "internalType": "uint24",
+              "name": "sqrtGamma",
+              "type": "uint24"
+            },
+            {
+              "internalType": "int24",
+              "name": "tick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "nextTickBelow",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "nextTickAbove",
+              "type": "int24"
+            },
+            {
+              "internalType": "uint80",
+              "name": "feeGrowthGlobal0",
+              "type": "uint80"
+            },
+            {
+              "internalType": "uint80",
+              "name": "feeGrowthGlobal1",
+              "type": "uint80"
+            }
+          ],
+          "internalType": "struct Tiers.Tier[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getDefaultAllowedSqrtGammas",
+      "outputs": [
+        {
+          "internalType": "uint24[]",
+          "name": "",
+          "type": "uint24[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "poolId",
+          "type": "bytes32"
+        }
+      ],
       "name": "getLimitOrderTickSpacingMultipliers",
       "outputs": [
         {
           "internalType": "uint8[6]",
           "name": "",
           "type": "uint8[6]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "poolId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getPoolAllowedSqrtGammas",
+      "outputs": [
+        {
+          "internalType": "uint24[]",
+          "name": "",
+          "type": "uint24[]"
         }
       ],
       "stateMutability": "view",
@@ -829,50 +928,6 @@
           "internalType": "uint80",
           "name": "feeGrowthInside1",
           "type": "uint80"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "poolId",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "positionRefId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint8",
-          "name": "tierId",
-          "type": "uint8"
-        },
-        {
-          "internalType": "int24",
-          "name": "tickLower",
-          "type": "int24"
-        },
-        {
-          "internalType": "int24",
-          "name": "tickUpper",
-          "type": "int24"
-        }
-      ],
-      "name": "getPositionSecondsPerLiquidityInside",
-      "outputs": [
-        {
-          "internalType": "uint96",
-          "name": "secondsPerLiquidityInside",
-          "type": "uint96"
         }
       ],
       "stateMutability": "view",
@@ -963,11 +1018,6 @@
               "internalType": "uint80",
               "name": "feeGrowthInside1",
               "type": "uint80"
-            },
-            {
-              "internalType": "uint96",
-              "name": "secondsPerLiquidityInside",
-              "type": "uint96"
             }
           ],
           "internalType": "struct Settlement.Snapshot",
@@ -1070,6 +1120,19 @@
     {
       "inputs": [
         {
+          "internalType": "uint24[]",
+          "name": "sqrtGammas",
+          "type": "uint24[]"
+        }
+      ],
+      "name": "setDefaultAllowedSqrtGammas",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint8",
           "name": "tickSpacing",
           "type": "uint8"
@@ -1137,6 +1200,24 @@
         }
       ],
       "name": "setLimitOrderType",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "poolId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint24[]",
+          "name": "sqrtGammas",
+          "type": "uint24[]"
+        }
+      ],
+      "name": "setPoolAllowedSqrtGammas",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

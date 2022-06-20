@@ -27,7 +27,13 @@
         }
       ],
       "name": "addTier",
-      "outputs": [],
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "tierId",
+          "type": "uint8"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },

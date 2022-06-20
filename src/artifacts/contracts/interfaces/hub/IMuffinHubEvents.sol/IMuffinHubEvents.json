@@ -436,6 +436,12 @@
         },
         {
           "indexed": false,
+          "internalType": "uint256",
+          "name": "amountOutDistribution",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
           "internalType": "uint256[]",
           "name": "tierData",
           "type": "uint256[]"

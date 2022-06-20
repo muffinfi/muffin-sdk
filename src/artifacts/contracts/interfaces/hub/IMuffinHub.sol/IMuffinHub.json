@@ -436,6 +436,12 @@
         },
         {
           "indexed": false,
+          "internalType": "uint256",
+          "name": "amountOutDistribution",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
           "internalType": "uint256[]",
           "name": "tierData",
           "type": "uint256[]"
@@ -604,7 +610,13 @@
         }
       ],
       "name": "addTier",
-      "outputs": [],
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "tierId",
+          "type": "uint8"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
@@ -678,67 +690,6 @@
       "name": "deposit",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "poolId",
-          "type": "bytes32"
-        }
-      ],
-      "name": "getAllTiers",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "uint128",
-              "name": "liquidity",
-              "type": "uint128"
-            },
-            {
-              "internalType": "uint128",
-              "name": "sqrtPrice",
-              "type": "uint128"
-            },
-            {
-              "internalType": "uint24",
-              "name": "sqrtGamma",
-              "type": "uint24"
-            },
-            {
-              "internalType": "int24",
-              "name": "tick",
-              "type": "int24"
-            },
-            {
-              "internalType": "int24",
-              "name": "nextTickBelow",
-              "type": "int24"
-            },
-            {
-              "internalType": "int24",
-              "name": "nextTickAbove",
-              "type": "int24"
-            },
-            {
-              "internalType": "uint80",
-              "name": "feeGrowthGlobal0",
-              "type": "uint80"
-            },
-            {
-              "internalType": "uint80",
-              "name": "feeGrowthGlobal1",
-              "type": "uint80"
-            }
-          ],
-          "internalType": "struct Tiers.Tier[]",
-          "name": "",
-          "type": "tuple[]"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -860,45 +811,6 @@
           "internalType": "bytes32",
           "name": "poolId",
           "type": "bytes32"
-        }
-      ],
-      "name": "getTWAP",
-      "outputs": [
-        {
-          "internalType": "uint32",
-          "name": "lastUpdate",
-          "type": "uint32"
-        },
-        {
-          "internalType": "int56",
-          "name": "tickCumulative",
-          "type": "int56"
-        },
-        {
-          "internalType": "int24",
-          "name": "tickEma20",
-          "type": "int24"
-        },
-        {
-          "internalType": "int24",
-          "name": "tickEma40",
-          "type": "int24"
-        },
-        {
-          "internalType": "uint96",
-          "name": "secondsPerLiquidityCumulative",
-          "type": "uint96"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "poolId",
-          "type": "bytes32"
         },
         {
           "internalType": "uint8",
@@ -954,11 +866,6 @@
               "internalType": "uint80",
               "name": "feeGrowthOutside1",
               "type": "uint80"
-            },
-            {
-              "internalType": "uint96",
-              "name": "secondsPerLiquidityOutside",
-              "type": "uint96"
             }
           ],
           "internalType": "struct Ticks.Tick",
@@ -1062,6 +969,30 @@
           "internalType": "address",
           "name": "",
           "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "poolId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint24",
+          "name": "sqrtGamma",
+          "type": "uint24"
+        }
+      ],
+      "name": "isSqrtGammaAllowed",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
         }
       ],
       "stateMutability": "view",
