@@ -26,6 +26,7 @@ export type MintOptions = {
   recipient: string //            The account that should receive the minted NFT.
   useAccount: boolean
   createPool?: boolean //         Creates pool if not initialized before mint.
+  createTier?: boolean //         Whether the tier needs to be created
   slippageTolerance: Percent //   How much the pool price is allowed to move.
   useNative?: NativeCurrency //   Whether to spend ether. If true, one of the pool tokens must be WETH, by default false
   token0Permit?: PermitOptions // The optional permit parameters for spending token0
@@ -79,27 +80,61 @@ export interface SetLimitOrderTypeOptions {
 export abstract class PositionManager {
   public static INTERFACE = new Interface(PositionManagerABI)
 
-  public static createCallParameters(pool: Pool, useNative: NativeCurrency | undefined): MethodParameters {
+  /**
+   * Construct calldata for creating a pool
+   */
+  public static createPoolCallParameters(
+    pool: Pool,
+    useAccount: boolean,
+    useNative: NativeCurrency | undefined
+  ): MethodParameters {
     const calldata = PositionManager.INTERFACE.encodeFunctionData('createPool', [
       pool.token0.address,
       pool.token1.address,
       pool.tiers[0].sqrtGamma,
       toHex(pool.tiers[0].sqrtPriceX72),
+      useAccount,
     ])
+    return { calldata, value: this._computeValueForCreateTier(useNative, pool) }
+  }
 
-    // if using native eth, calculate msg.value needed to create pool
+  /**
+   * Construct calldata for adding a tier to the pool
+   */
+  public static addTierCallParameters(
+    pool: Pool,
+    tierId: number,
+    useAccount: boolean,
+    useNative: NativeCurrency | undefined
+  ): MethodParameters {
+    const calldata = PositionManager.INTERFACE.encodeFunctionData('addTier', [
+      pool.token0.address,
+      pool.token1.address,
+      pool.tiers[tierId].sqrtGamma,
+      useAccount,
+      tierId,
+    ])
+    return { calldata, value: this._computeValueForCreateTier(useNative, pool) }
+  }
+
+  /**
+   * Calculate msg.value needed to create tier
+   */
+  private static _computeValueForCreateTier(useNative: NativeCurrency | undefined, pool: Pool): string {
     let value: string = toHex(0)
     if (useNative) {
       const wrapped = useNative.wrapped
       invariant(pool.token0.equals(wrapped) || pool.token1.equals(wrapped), 'NO_WETH')
       value = pool.token0.equals(wrapped)
-        ? toHex(pool.token0AmountForCreatePool.quotient)
-        : toHex(pool.token1AmountForCreatePool.quotient)
+        ? toHex(pool.token0AmountForCreateTier.quotient)
+        : toHex(pool.token1AmountForCreateTier.quotient)
     }
-
-    return { calldata, value }
+    return value
   }
 
+  /**
+   * Construct calldata for adding liquidity
+   */
   public static addCallParameters(position: Position, options: AddLiquidityOptions): MethodParameters {
     invariant(JSBI.greaterThan(position.liquidityD8, ZERO), 'ZERO_LIQUIDITY')
 
@@ -113,15 +148,20 @@ export abstract class PositionManager {
       calldatas.push(SelfPermit.encodePermit(position.pool.token1, options.token1Permit))
     }
 
-    // create pool if needed
+    // create tier if needed
     let value: string = toHex(0)
-    if (isMint(options) && options.createPool) {
-      const params = this.createCallParameters(position.pool, options.useNative)
+    if (isMint(options) && (options.createPool || options.createTier)) {
+      invariant(options.createPool && options.createTier, 'CREATE_POOL_OR_TIER')
+
+      const params = options.createPool
+        ? this.createPoolCallParameters(position.pool, options.useAccount, options.useNative)
+        : this.addTierCallParameters(position.pool, position.tierId, options.useAccount, options.useNative)
+
       calldatas.push(params.calldata)
       value = params.value
 
       /**
-       * Subtract position's liquidity with a base that is used to create pool.
+       * Subtract position's liquidity with a base that is used to create tier.
        * Note that base liquidity is taking more tokens than it should, as it's using simple xy=k invariant
        * This will overall charge users more tokens than they desire to input, though small but could be a potential bug
        */

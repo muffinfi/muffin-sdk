@@ -73,18 +73,18 @@ export class Pool {
   }
 
   /**
-   * Return the amount of token0 required to create pool
+   * Return the amount of token0 required to create tier
    */
-  public get token0AmountForCreatePool(): CurrencyAmount<Token> {
+  public get token0AmountForCreateTier(): CurrencyAmount<Token> {
     // i.e. (baseLiquidityD8 << 80) / sqrtPrice
     const amount0 = ceilDiv(JSBI.leftShift(JSBI.BigInt(BASE_LIQUIDITY_D8), JSBI.BigInt(80)), this.tiers[0].sqrtPriceX72)
     return CurrencyAmount.fromRawAmount(this.token0, amount0)
   }
 
   /**
-   * Return the amount of token1 required to create pool
+   * Return the amount of token1 required to create tier
    */
-  public get token1AmountForCreatePool(): CurrencyAmount<Token> {
+  public get token1AmountForCreateTier(): CurrencyAmount<Token> {
     // i.e. (baseLiquidityD8 * sqrtPrice) / (1 << 64)
     const amount1 = ceilDiv(
       JSBI.multiply(JSBI.BigInt(BASE_LIQUIDITY_D8), this.tiers[0].sqrtPriceX72),

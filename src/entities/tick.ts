@@ -13,7 +13,6 @@ export type TickChainData = {
   needSettle1: boolean
   feeGrowthOutside0: BigintIsh
   feeGrowthOutside1: BigintIsh
-  secondsPerLiquidityOutside: BigintIsh
 }
 
 export class Tick {
