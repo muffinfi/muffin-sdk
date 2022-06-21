@@ -56,8 +56,8 @@ export class Position {
     settled?: boolean
   }) {
     invariant(tickLower < tickUpper, 'TICK_ORDER')
-    invariant(tickLower >= MIN_TICK && tickLower % pool.tickSpacing === 0, 'TICK_LOWER')
-    invariant(tickUpper <= MAX_TICK && tickUpper % pool.tickSpacing === 0, 'TICK_UPPER')
+    invariant(tickLower >= MIN_TICK, 'TICK_LOWER_LIMIT')
+    invariant(tickUpper <= MAX_TICK, 'TICK_UPPER_LIMIT')
     invariant(tierId < pool.tiers.length, 'TIER_ID')
     invariant(limitOrderType == null || limitOrderType in LimitOrderType, 'LIMIT_ORDER_TYPE')
     invariant(
