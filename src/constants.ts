@@ -14,10 +14,6 @@ export enum LimitOrderType {
 }
 export const SWAP_AMOUNT_TOLERANCE = JSBI.BigInt('100')
 
-// Contract defaults
-export const DEFAULT_TICK_SPACING = 200
-export const SQRT_GAMMAS_FIRST_TIER = [99850, 99975]
-
 // Common variables
 export const ZERO = JSBI.BigInt(0)
 export const ONE = JSBI.BigInt(1)
