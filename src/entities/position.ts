@@ -256,8 +256,8 @@ export class Position {
     const { sqrtPriceSlippageLower, sqrtPriceSlippageUpper } = this.poolTier.sqrtPriceAfterSlippage(slippageTolerance)
 
     // calculate minimum output amounts from burning the liquidity under the tolerated current tier price
-    const { amount0 } = PoolMath.minInputAmountsForLiquidityD8(sqrtPriceSlippageUpper, sqrtPLower, sqrtPUpper, this.liquidityD8) // prettier-ignore
-    const { amount1 } = PoolMath.minInputAmountsForLiquidityD8(sqrtPriceSlippageLower, sqrtPLower, sqrtPUpper, this.liquidityD8) // prettier-ignore
+    const { amount0 } = PoolMath.minOutputAmountsForLiquidityD8(sqrtPriceSlippageUpper, sqrtPLower, sqrtPUpper, this.liquidityD8) // prettier-ignore
+    const { amount1 } = PoolMath.minOutputAmountsForLiquidityD8(sqrtPriceSlippageLower, sqrtPLower, sqrtPUpper, this.liquidityD8) // prettier-ignore
     return { amount0, amount1 }
   }
 }

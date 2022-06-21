@@ -110,4 +110,17 @@ export abstract class PoolMath {
   ): Readonly<{ amount0: JSBI; amount1: JSBI }> {
     return this.amountsForLiquidityD8(sqrtPCurrent, sqrtPLower, sqrtPUpper, liquidityD8, true)
   }
+
+  /**
+   * Returns the minimum amounts expected from burning the amount of liquidity held by the position at the current
+   * price for the pool
+   */
+  public static minOutputAmountsForLiquidityD8(
+    sqrtPCurrent: JSBI,
+    sqrtPLower: JSBI,
+    sqrtPUpper: JSBI,
+    liquidityD8: JSBI
+  ): Readonly<{ amount0: JSBI; amount1: JSBI }> {
+    return this.amountsForLiquidityD8(sqrtPCurrent, sqrtPLower, sqrtPUpper, liquidityD8, false)
+  }
 }
