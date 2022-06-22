@@ -151,7 +151,7 @@ export abstract class PositionManager {
     // create tier if needed
     let value: string = toHex(0)
     if (isMint(options) && (options.createPool || options.createTier)) {
-      invariant(options.createPool && options.createTier, 'CREATE_POOL_OR_TIER')
+      invariant(!(options.createPool && options.createTier), 'CREATE_POOL_OR_TIER')
 
       const params = options.createPool
         ? this.createPoolCallParameters(position.pool, options.useAccount, options.useNative)
