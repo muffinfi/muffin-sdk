@@ -143,6 +143,11 @@
             },
             {
               "internalType": "uint256[]",
+              "name": "tierAmountsOut",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
               "name": "tierData",
               "type": "uint256[]"
             }
@@ -200,6 +205,11 @@
             {
               "internalType": "uint256[]",
               "name": "tierAmountsIn",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tierAmountsOut",
               "type": "uint256[]"
             },
             {
