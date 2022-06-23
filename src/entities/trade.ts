@@ -21,6 +21,8 @@ type Swap<TInput extends Currency, TOutput extends Currency> = {
 export class Trade<TInput extends Currency, TOutput extends Currency, TTradeType extends TradeType> {
   public readonly swaps: Swap<TInput, TOutput>[]
   public readonly tradeType: TTradeType
+  public readonly inputCurrency: TInput
+  public readonly outputCurrency: TOutput
 
   private _inputAmount?: CurrencyAmount<TInput> // cache
   private _outputAmount?: CurrencyAmount<TOutput> // cache
@@ -62,6 +64,8 @@ export class Trade<TInput extends Currency, TOutput extends Currency, TTradeType
 
     this.swaps = routes
     this.tradeType = tradeType
+    this.inputCurrency = inputCurrency
+    this.outputCurrency = outputCurrency
   }
 
   /**
