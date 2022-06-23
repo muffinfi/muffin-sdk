@@ -64,15 +64,6 @@ export class Pool {
   }
 
   /**
-   * Return the tier with the most liquidity
-   */
-  public get mostLiquidTier(): Tier {
-    return this.tiers.slice(1).reduce((acc, tier) => {
-      return JSBI.greaterThan(tier.liquidity, acc.liquidity) ? tier : acc
-    }, this.tiers[0])
-  }
-
-  /**
    * Return the amount of token0 required to create tier
    */
   public get token0AmountForCreateTier(): CurrencyAmount<Token> {

@@ -13,6 +13,7 @@ export enum LimitOrderType {
   OneForZero = 2,
 }
 export const SWAP_AMOUNT_TOLERANCE = JSBI.BigInt('100')
+export const MAX_TIER_CHOICES = 0b111111
 
 // Common variables
 export const ZERO = JSBI.BigInt(0)
