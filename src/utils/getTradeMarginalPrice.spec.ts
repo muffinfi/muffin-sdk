@@ -1,9 +1,10 @@
-import { Currency, CurrencyAmount, Price, Token, TradeType } from '@uniswap/sdk-core'
+import { CurrencyAmount, Fraction, Token, TradeType } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import { MAX_TICK, MIN_TICK, Q72 } from '../constants'
 import { Pool } from '../entities/pool'
 import { Route } from '../entities/route'
 import { Trade } from '../entities/trade'
+import { getTradeMaringalOutputAmount } from './getPriceImpact'
 import { getTradeMarginalPrice } from './getTradeMarginalPrice'
 
 function token({
@@ -56,30 +57,27 @@ describe('getTradeMarginalPrice', () => {
     { ...defaultTierData, sqrtPrice: Q72 },
   ])
 
-  const trade = new Trade({
-    tradeType: TradeType.EXACT_INPUT,
-    routes: [
-      {
-        route: new Route([pool01, pool12], [0b111111, 0b111111], token0, token2),
-        inputAmount: CurrencyAmount.fromRawAmount(token0, 100000),
-        outputAmount: CurrencyAmount.fromRawAmount(token2, 100000),
-      },
-      {
-        route: new Route([pool02], [0b111111], token0, token2),
-        inputAmount: CurrencyAmount.fromRawAmount(token0, 50000),
-        outputAmount: CurrencyAmount.fromRawAmount(token2, 50000),
-      },
-    ],
-  })
+  const routes = [
+    {
+      route: new Route([pool01, pool12], [0b111111, 0b111111], token0, token2),
+      inputAmount: CurrencyAmount.fromRawAmount(token0, 100000),
+      outputAmount: CurrencyAmount.fromRawAmount(token2, 100000),
+    },
+    {
+      route: new Route([pool02], [0b111111], token0, token2),
+      inputAmount: CurrencyAmount.fromRawAmount(token0, 50000),
+      outputAmount: CurrencyAmount.fromRawAmount(token2, 50000),
+    },
+  ]
 
-  it('henlo', () => {
+  it('exact in', () => {
+    const trade = new Trade({ tradeType: TradeType.EXACT_INPUT, routes })
     const hopsList = [
       [{ tierAmountsIn: [75000, 25000] }, { tierAmountsIn: [1, 1] }], // the amount need not to be correct. we need the proportion only
       [{ tierAmountsIn: [30000, 20000] }],
     ]
 
     const price = getTradeMarginalPrice(trade, hopsList)
-
     const control = trade.swaps
       .map((swap) => Number(swap.inputAmount.toSignificant(10))) // get input amount per swap
       .map((amt, _, arr) => amt / arr.reduce(sum)) // to percent
@@ -96,13 +94,28 @@ describe('getTradeMarginalPrice', () => {
         return priceOfSwap * pct
       })
       .reduce(sum)
-
     // console.log(price.baseCurrency.symbol, price.quoteCurrency.symbol, price.toFixed(5), control)
 
     expect(priceToNumer(price)).toBeCloseTo(control)
+
+    const amtOut = getTradeMaringalOutputAmount(trade, hopsList)
+    const price2 = amtOut.divide(trade.inputAmount).asFraction
+    expect(priceToNumer(price)).toBeCloseTo(priceToNumer(price2))
+  })
+
+  it('exact out', () => {
+    const priceExactOut = getTradeMarginalPrice(new Trade({ tradeType: TradeType.EXACT_OUTPUT, routes }), [
+      [{ tierAmountsIn: [75000, 25000] }, { tierAmountsIn: [1, 1] }],
+      [{ tierAmountsIn: [30000, 20000] }],
+    ])
+    const priceExactIn = getTradeMarginalPrice(new Trade({ tradeType: TradeType.EXACT_INPUT, routes }), [
+      [{ tierAmountsIn: [1, 1] }, { tierAmountsIn: [75000, 25000] }],
+      [{ tierAmountsIn: [30000, 20000] }],
+    ])
+    expect(priceExactOut).toEqual(priceExactIn)
   })
 })
 
-const priceToNumer = (price: Price<Currency, Currency>) => Number(price.toSignificant(10))
+const priceToNumer = (price: Fraction) => Number(price.toSignificant(10))
 const sum = (acc: number, x: number) => acc + x
 const product = (acc: number, x: number) => acc * x
