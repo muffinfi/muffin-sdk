@@ -206,7 +206,7 @@ export abstract class PositionManager {
        * Note that base liquidity is taking more tokens than it should, as it's using simple xy=k invariant
        * This will overall charge users more tokens than they desire to input, though small but could be a potential bug
        */
-      const liquidityD8 = JSBI.subtract(position.liquidityD8, JSBI.BigInt(BASE_LIQUIDITY_D8))
+      const liquidityD8 = JSBI.subtract(position.liquidityD8, BASE_LIQUIDITY_D8)
       invariant(JSBI.greaterThan(liquidityD8, ZERO), 'ZERO_LIQUIDITY_AFTER_CREATE')
       position = new Position({
         pool: position.pool,

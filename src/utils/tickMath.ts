@@ -24,7 +24,7 @@ export abstract class TickMath {
    * Convert tick to sqrt price
    */
   public static tickToSqrtPriceX72(tick: number): JSBI {
-    invariant(tick >= TickMath.MIN_TICK && tick <= TickMath.MAX_TICK && Number.isInteger(tick), 'TICK')
+    invariant(tick >= this.MIN_TICK && tick <= this.MAX_TICK && Number.isInteger(tick), 'TICK')
     const x = tick < 0 ? -tick : tick
 
     let ratio: JSBI = JSBI.BigInt('0x100000000000000000000000000000000')
@@ -60,8 +60,8 @@ export abstract class TickMath {
    * Convert sqrt price to tick
    */
   public static sqrtPriceX72ToTick(sqrtPriceX72: JSBI): number {
-    invariant(JSBI.greaterThanOrEqual(sqrtPriceX72, TickMath.MIN_SQRT_PRICE), 'SQRT_RATIO')
-    invariant(JSBI.lessThanOrEqual(sqrtPriceX72, TickMath.MAX_SQRT_PRICE), 'SQRT_RATIO')
+    invariant(JSBI.greaterThanOrEqual(sqrtPriceX72, this.MIN_SQRT_PRICE), 'SQRT_RATIO')
+    invariant(JSBI.lessThanOrEqual(sqrtPriceX72, this.MAX_SQRT_PRICE), 'SQRT_RATIO')
 
     const msb = mostSignificantBit(sqrtPriceX72)
     let log2 = JSBI.leftShift(JSBI.subtract(JSBI.BigInt(msb), JSBI.BigInt(72)), JSBI.BigInt(64))
@@ -96,7 +96,7 @@ export abstract class TickMath {
       )
     )
 
-    return tickLow === tickHigh || JSBI.greaterThanOrEqual(sqrtPriceX72, TickMath.tickToSqrtPriceX72(tickHigh))
+    return tickLow === tickHigh || JSBI.greaterThanOrEqual(sqrtPriceX72, this.tickToSqrtPriceX72(tickHigh))
       ? tickHigh
       : tickLow
   }
