@@ -11,15 +11,18 @@ import { PermitOptions, SelfPermit } from './selfPermit'
  * Options for producing the arguments to send calls to the manager.
  */
 export interface AccountCallOptions {
-  recipient: string //                  The recipient of the token deposit
-  managerAddress: string //             Address of the account manager contract
+  /** The recipient of the token deposit */
+  recipient: string
+  /** Address of the account manager contract */
+  managerAddress: string
 }
 
 /**
  * Options for producing the arguments to send deposit calls to the manager
  */
 export interface DepositCallOptions extends AccountCallOptions {
-  inputTokenPermit?: PermitOptions // The optional permit parameters for spending the input
+  /** The optional permit parameters for spending the input */
+  inputTokenPermit?: PermitOptions
 }
 
 export abstract class AccountManager {

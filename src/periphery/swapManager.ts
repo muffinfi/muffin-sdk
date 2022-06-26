@@ -15,13 +15,20 @@ import { PermitOptions, SelfPermit } from './selfPermit'
  * Options for producing the arguments to send calls to the manager.
  */
 export interface SwapOptions {
-  recipient: string //                The account that should receive the output.
-  fromAccount: boolean //             Use internal account to pay the swap input token
-  toAccount: boolean //               Send swap output token to recipient internal account
-  slippageTolerance: Percent //       How much the execution price is allowed to move unfavorably from the trade execution price.
-  deadline: BigintIsh //              When the transaction expires, in epoch seconds.
-  inputTokenPermit?: PermitOptions // The optional permit parameters for spending the input.
-  managerAddress?: string //          Address of the swap manager contract
+  /** The account that should receive the output.  */
+  recipient: string
+  /** Use internal account to pay the swap input token  */
+  fromAccount: boolean
+  /** Send swap output token to recipient internal account  */
+  toAccount: boolean
+  /** How much the execution price is allowed to move unfavorably from the trade execution price.  */
+  slippageTolerance: Percent
+  /** When the transaction expires, in epoch seconds.  */
+  deadline: BigintIsh
+  /** The optional permit parameters for spending the input.  */
+  inputTokenPermit?: PermitOptions
+  /** Address of the swap manager contract  */
+  managerAddress?: string
 }
 
 export abstract class SwapManager {

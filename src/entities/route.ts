@@ -1,10 +1,10 @@
-import { Currency, Price, Token } from '@uniswap/sdk-core'
+import { Currency, Token } from '@uniswap/sdk-core'
 import invariant from 'tiny-invariant'
 import { MAX_TIER_CHOICES } from '../constants'
 import { Pool } from './pool'
 
 /**
- * Represents a list of pools through which a swap can occur
+ * Represents a swap route, i.e. a list of pools to swap through
  */
 export class Route<TInput extends Currency, TOutput extends Currency> {
   public readonly pools: Pool[]
@@ -16,6 +16,7 @@ export class Route<TInput extends Currency, TOutput extends Currency> {
   /**
    * Creates an instance of route.
    * @param pools An array of `Pool` objects, ordered by the route the swap will take
+   * @param tierChoicesList A list of tier choice for each pool in the route
    * @param input The input token
    * @param output The output token
    */
@@ -52,17 +53,19 @@ export class Route<TInput extends Currency, TOutput extends Currency> {
     this.tokenPath = tokenPath
     this.tierChoicesList = tierChoicesList
     this.input = input
-    this.output = output ?? tokenPath[tokenPath.length - 1]
+    this.output = output
   }
 
+  /**
+   * Get the chain id of the route
+   */
   public get chainId(): number {
     return this.pools[0].chainId
   }
 
-  public get midPrice(): Price<TInput, TOutput> {
-    throw new Error('Mid price not supported')
-  }
-
+  /**
+   * Return true if this route is equal to the given route
+   */
   public equals(other: Route<Currency, Currency>): boolean {
     if (this.pools.length !== other.pools.length) return false
     if (this.pools.some((pool, i) => !pool.equals(other.pools[i]))) return false

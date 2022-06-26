@@ -36,6 +36,9 @@ export class Position {
   private _mintAmounts?: { amount0: JSBI; amount1: JSBI } // cache
   private _settleAmounts?: { amount0?: JSBI; amount1?: JSBI } // cache
 
+  /**
+   * Construct a position
+   */
   public constructor({
     pool,
     tierId,
@@ -60,10 +63,9 @@ export class Position {
     invariant(tickUpper <= MAX_TICK, 'TICK_UPPER_LIMIT')
     invariant(tierId < pool.tiers.length, 'TIER_ID')
     invariant(limitOrderType == null || limitOrderType in LimitOrderType, 'LIMIT_ORDER_TYPE')
-    invariant(
-      !settled || (limitOrderType != null && limitOrderType !== LimitOrderType.NotLimitOrder),
-      'LIMIT_ORDER_TYPE'
-    )
+    if (settled) {
+      invariant(limitOrderType != null && limitOrderType !== LimitOrderType.NotLimitOrder, 'LIMIT_ORDER_TYPE')
+    }
 
     this.pool = pool
     this.tierId = tierId
@@ -76,6 +78,9 @@ export class Position {
     if (settled != null) this.settled = settled
   }
 
+  /**
+   * Compute the maximum amount of liquidity received for a given token0 amount, token1 amount, and tick range.
+   */
   public static fromAmounts({
     pool,
     tierId,
@@ -83,7 +88,8 @@ export class Position {
     tickUpper,
     amount0,
     amount1,
-    ...rest
+    limitOrderType,
+    settled,
   }: FromAmountsArgs): Position {
     const sqrtPLower = TickMath.tickToSqrtPriceX72(tickLower)
     const sqrtPUpper = TickMath.tickToSqrtPriceX72(tickUpper)
@@ -94,17 +100,29 @@ export class Position {
       JSBI.BigInt(amount0),
       JSBI.BigInt(amount1)
     )
-    return new Position({ pool, tierId, tickLower, tickUpper, liquidityD8, ...rest })
+    return new Position({ pool, tierId, tickLower, tickUpper, liquidityD8, limitOrderType, settled })
   }
 
+  /**
+   * Construct a position by computing the maximum amount of liquidity received for a given token0 amount,
+   * assuming an unlimited amount of token1.
+   */
   public static fromAmount0(args: FromAmount0Args): Position {
     return this.fromAmounts({ ...args, amount1: MaxUint256 })
   }
 
+  /**
+   * Construct a position by computing the maximum amount of liquidity received for a given token1 amount,
+   * assuming an unlimited amount of token0.
+   */
   public static fromAmount1(args: FromAmount1Args): Position {
     return this.fromAmounts({ ...args, amount0: MaxUint256 })
   }
 
+  /**
+   * Construct a limit-order position by computing the amount of liquidity required such that the position will
+   * consist of the given amount of token0 or token1 when it is fully converted into single-sided.
+   */
   public static fromLimitOrderExactOutput({
     tickLower,
     tickUpper,
@@ -131,26 +149,38 @@ export class Position {
     return new Position({ tickLower, tickUpper, liquidityD8, limitOrderType, ...rest })
   }
 
+  /**
+   * Returns the tier where the position is in
+   */
   public get poolTier(): Tier {
     invariant(this.tierId < this.pool.tiers.length, 'TIER_ID')
     return this.pool.tiers[this.tierId]
   }
 
+  /**
+   * Returns the amount of liquidity of the position
+   */
   public get liquidity(): JSBI {
     return JSBI.multiply(this.liquidityD8, JSBI.BigInt(256))
   }
 
-  // Returns the price of token0 at the lower tick
+  /**
+   * Returns the price of token0 denominated in token1 at the lower tick
+   */
   public get token0PriceLower(): Price<Token, Token> {
     return tickToPrice(this.pool.token0, this.pool.token1, this.tickLower)
   }
 
-  // Returns the price of token0 at the upper tick
+  /**
+   * Returns the price of token0 denominated in token1 at the upper tick
+   */
   public get token0PriceUpper(): Price<Token, Token> {
     return tickToPrice(this.pool.token0, this.pool.token1, this.tickUpper)
   }
 
-  // Returns the amount of underlying token0 in this position
+  /**
+   * Returns the amount of underlying token0 in this position
+   */
   public get amount0(): CurrencyAmount<Token> {
     if (this._token0Amount == null) {
       const { sqrtPUpper, sqrtPExit } = this._calculateSqrtPrices()
@@ -160,7 +190,9 @@ export class Position {
     return this._token0Amount
   }
 
-  // Returns the amount of underlying token0 in this position
+  /**
+   * Returns the amount of underlying token0 in this position
+   */
   public get amount1(): CurrencyAmount<Token> {
     if (this._token1Amount == null) {
       const { sqrtPLower, sqrtPExit } = this._calculateSqrtPrices()
@@ -190,7 +222,9 @@ export class Position {
     return { sqrtPLower, sqrtPUpper, sqrtPExit }
   }
 
-  // Returns the holding amounts of tokens at input price with the amount of liquidity of this position
+  /**
+   * Returns the amounts of underlying tokens at the given price with the amount of liquidity of this position
+   */
   public amountsAtPrice(sqrtPriceX72: JSBI, roundUp: boolean): Readonly<{ amount0: JSBI; amount1: JSBI }> {
     return PoolMath.amountsForLiquidityD8(
       sqrtPriceX72,
@@ -201,7 +235,9 @@ export class Position {
     )
   }
 
-  // Returns the minimum input amounts required to mint the amount of liquidity of this position at current price
+  /**
+   * Returns the minimum input amounts required to mint the amount of liquidity of this position at the current price
+   */
   public get mintAmounts(): Readonly<{ amount0: JSBI; amount1: JSBI }> {
     if (this._mintAmounts == null) {
       this._mintAmounts = this.amountsAtPrice(this.poolTier.sqrtPriceX72, true)
@@ -209,7 +245,10 @@ export class Position {
     return this._mintAmounts
   }
 
-  // Returns the settle amounts can be collected when reached the specified price
+  /**
+   * Returns the amounts of underlying tokens of this limit-order position if it is settled. Returns nothing if this
+   * position is not a limit order.
+   */
   public get settleAmounts(): Readonly<{ amount0?: JSBI; amount1?: JSBI }> {
     if (this._settleAmounts == null) {
       if (this.limitOrderType !== LimitOrderType.ZeroForOne && this.limitOrderType !== LimitOrderType.OneForZero) {
@@ -226,7 +265,9 @@ export class Position {
     return this._settleAmounts
   }
 
-  // Returns the minimum input amounts required to mint the amount of liquidity of this position with the given slippage tolerance
+  /**
+   * Returns the minimum input amounts required to mint the amount of liquidity of this position with the given slippage tolerance
+   */
   public mintAmountsWithSlippage(slippageTolerance: Percent): Readonly<{ amount0: JSBI; amount1: JSBI }> {
     const sqrtPLower = TickMath.tickToSqrtPriceX72(this.tickLower)
     const sqrtPUpper = TickMath.tickToSqrtPriceX72(this.tickUpper)
@@ -246,8 +287,10 @@ export class Position {
     return { amount0, amount1 }
   }
 
-  // Returns the minimum output amounts expected from burning the liquidity of this position with the given slippage tolerance
-  // (Note that this is not for settled position)
+  /**
+   * Returns the minimum output amounts expected from burning the liquidity of this position with the given slippage tolerance
+   * (Note that this is not for settled position)
+   */
   public burnAmountsWithSlippage(slippageTolerance: Percent): Readonly<{ amount0: JSBI; amount1: JSBI }> {
     const sqrtPLower = TickMath.tickToSqrtPriceX72(this.tickLower)
     const sqrtPUpper = TickMath.tickToSqrtPriceX72(this.tickUpper)

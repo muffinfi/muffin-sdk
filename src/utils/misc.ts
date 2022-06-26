@@ -1,7 +1,7 @@
 import { BigintIsh, Fraction, Price, sqrt, Token } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
-import { E10, MAX_SQRT_P, MAX_TICK, MIN_SQRT_P, MIN_TICK, Q144 } from '../constants'
+import { E10, MAX_SQRT_PRICE, MAX_TICK, MIN_SQRT_PRICE, MIN_TICK, Q144 } from '../constants'
 import { TickMath } from './tickMath'
 
 /*====================================================================
@@ -9,15 +9,25 @@ import { TickMath } from './tickMath'
  *===================================================================*/
 
 export function isValidSqrtGamma(sqrtGamma: number | undefined): sqrtGamma is number {
-  return sqrtGamma != null && sqrtGamma > 0 && sqrtGamma <= 100_000
+  return sqrtGamma != null && Number.isInteger(sqrtGamma) && sqrtGamma > 0 && sqrtGamma <= 100_000
 }
 
+/**
+ * Convert sqrt gamma to fee, a value in [0, 1]
+ * @param sqrtGamma Sqrt gamma. Assumed it is valid.
+ * @return Fee, in [0, 1]
+ */
 export const sqrtGammaToFee = (sqrtGamma: number): Fraction => {
   const sg = JSBI.BigInt(sqrtGamma)
   const gamma = JSBI.multiply(sg, sg)
   return new Fraction(JSBI.subtract(E10, gamma), E10)
 }
 
+/**
+ * Convert sqrt gamma to fee percent, a value in [0, 100]
+ * @param sqrtGamma Sqrt gamma. Assumed it is valid.
+ * @return Fee percent, in [0, 100]
+ */
 export const sqrtGammaToFeePercent = (sqrtGamma: number): Fraction => {
   return sqrtGammaToFee(sqrtGamma).multiply(100)
 }
@@ -39,8 +49,11 @@ export function encodeSqrtPriceX72(amount1: BigintIsh, amount0: BigintIsh): JSBI
   return sqrt(ratioX144)
 }
 
-export const isSqrtPriceSupported = (sqrtPriceX72: JSBI) => {
-  return JSBI.greaterThanOrEqual(sqrtPriceX72, MIN_SQRT_P) && JSBI.lessThanOrEqual(sqrtPriceX72, MAX_SQRT_P)
+/**
+ * Returns true if the given sqrt price is in supported price range
+ */
+export const isSqrtPriceSupported = (sqrtPriceX72: JSBI): boolean => {
+  return JSBI.greaterThanOrEqual(sqrtPriceX72, MIN_SQRT_PRICE) && JSBI.lessThanOrEqual(sqrtPriceX72, MAX_SQRT_PRICE)
 }
 
 /*====================================================================
@@ -52,15 +65,15 @@ export const isSqrtPriceSupported = (sqrtPriceX72: JSBI) => {
  * @param tick the target tick
  * @param tickSpacing the spacing of the pool
  */
-export function nearestUsableTick(tick: number, tickSpacing: number) {
+export function nearestUsableTick(tick: number, tickSpacing: number): number {
   invariant(Number.isInteger(tick) && Number.isInteger(tickSpacing), 'INTEGERS')
   invariant(tickSpacing > 0, 'TICK_SPACING')
   invariant(tick >= MIN_TICK && tick <= MAX_TICK, 'TICK_BOUND')
 
   const rounded = Math.round(tick / tickSpacing) * tickSpacing
   if (rounded < MIN_TICK) return rounded + tickSpacing
-  else if (rounded > MAX_TICK) return rounded - tickSpacing
-  else return rounded
+  if (rounded > MAX_TICK) return rounded - tickSpacing
+  return rounded
 }
 
 /*====================================================================
@@ -103,13 +116,11 @@ export function priceToClosestTick(
   const priceNextTick = tickToPrice(price.baseCurrency, price.quoteCurrency, tick + 1)
 
   const factor = new Fraction(1).add(tolerance)
-  const ratio = new Fraction(price.numerator, price.denominator)
-  const ratioNextTick = new Fraction(priceNextTick.numerator, priceNextTick.denominator)
 
   if (sorted) {
-    if (!ratio.multiply(factor).lessThan(ratioNextTick)) tick++
+    if (!price.asFraction.multiply(factor).lessThan(priceNextTick.asFraction)) tick++
   } else {
-    if (!ratio.divide(factor).greaterThan(ratioNextTick)) tick++
+    if (!price.asFraction.divide(factor).greaterThan(priceNextTick.asFraction)) tick++
   }
   return tick
 }

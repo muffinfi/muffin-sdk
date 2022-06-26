@@ -3,16 +3,18 @@ import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { MAX_TICK, MIN_TICK } from '../constants'
 
+type BigNumberish = BigintIsh | { toString(): string }
+
 export type TickChainData = {
   index: number
-  liquidityLowerD8: BigintIsh
-  liquidityUpperD8: BigintIsh
+  liquidityLowerD8: BigNumberish
+  liquidityUpperD8: BigNumberish
   nextBelow: number
   nextAbove: number
   needSettle0: boolean
   needSettle1: boolean
-  feeGrowthOutside0: BigintIsh
-  feeGrowthOutside1: BigintIsh
+  feeGrowthOutside0: BigNumberish
+  feeGrowthOutside1: BigNumberish
 }
 
 export class Tick {

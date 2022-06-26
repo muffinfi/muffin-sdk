@@ -4,7 +4,7 @@ import { Trade } from '../entities/trade'
 import { getInputAmountDistribution, Hop } from './getInputAmountDistribution'
 
 /**
- * TODO: seems not making sense. pending to delete
+ * @deprecated TODO: seems not making sense. pending to delete
  */
 export function getRealizedFee<TInput extends Currency, TOutput extends Currency>(
   trade: Trade<TInput, TOutput, TradeType>,

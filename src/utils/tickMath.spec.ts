@@ -31,11 +31,11 @@ describe('TickMath', () => {
     })
 
     it('returns the correct value for min tick', () => {
-      expect(TickMath.tickToSqrtPriceX72(TickMath.MIN_TICK)).toEqual(TickMath.MIN_SQRT_P)
+      expect(TickMath.tickToSqrtPriceX72(TickMath.MIN_TICK)).toEqual(TickMath.MIN_SQRT_PRICE)
     })
 
     it('returns the correct value for max tick', () => {
-      expect(TickMath.tickToSqrtPriceX72(TickMath.MAX_TICK)).toEqual(TickMath.MAX_SQRT_P)
+      expect(TickMath.tickToSqrtPriceX72(TickMath.MAX_TICK)).toEqual(TickMath.MAX_SQRT_PRICE)
     })
 
     it('returns the correct value for tick 0', () => {
@@ -45,11 +45,11 @@ describe('TickMath', () => {
 
   describe('#sqrtPriceX72ToTick', () => {
     it('returns the correct value for sqrt price at min tick', () => {
-      expect(TickMath.sqrtPriceX72ToTick(TickMath.MIN_SQRT_P)).toEqual(TickMath.MIN_TICK)
+      expect(TickMath.sqrtPriceX72ToTick(TickMath.MIN_SQRT_PRICE)).toEqual(TickMath.MIN_TICK)
     })
 
     it('returns the correct value for sqrt price at max tick', () => {
-      expect(TickMath.sqrtPriceX72ToTick(TickMath.MAX_SQRT_P)).toEqual(TickMath.MAX_TICK)
+      expect(TickMath.sqrtPriceX72ToTick(TickMath.MAX_SQRT_PRICE)).toEqual(TickMath.MAX_TICK)
     })
 
     it('returns the correct value for sqrt price at tick 0', () => {

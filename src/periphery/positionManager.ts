@@ -11,53 +11,81 @@ import { Multicall } from './multicall'
 import { Payments } from './payments'
 import { PermitOptions, SelfPermit } from './selfPermit'
 
-// --------------------------------------
-
+/**
+ * Options for producing the calldata to transfer position NFT.
+ */
 export interface SafeTransferOptions {
-  sender: string //     The account sending the NFT.
-  recipient: string //  The account that should receive the NFT.
-  tokenId: BigintIsh // The id of the token being sent.
-  data?: string //      The optional parameter that passes data to the `onERC721Received` call for the staker
+  /** The account sending the NFT. */
+  sender: string
+  /** The account that should receive the NFT. */
+  recipient: string
+  /** The id of the token being sent. */
+  tokenId: BigintIsh
+  /** The optional parameter that passes data to the `onERC721Received` call for the staker */
+  data?: string
 }
 
-// --------------------------------------
-
+/**
+ * Options for producing the calldata to mint position.
+ */
 export type MintOptions = {
-  recipient: string //            The account that should receive the minted NFT.
+  /** The account that should receive the minted NFT. */
+  recipient: string
+  /** Whether to use internal account to pay tokens */
   useAccount: boolean
-  createPool?: boolean //         Creates pool if not initialized before mint.
-  createTier?: boolean //         Whether the tier needs to be created
-  slippageTolerance: Percent //   How much the pool price is allowed to move.
-  useNative?: NativeCurrency //   Whether to spend ether. If true, one of the pool tokens must be WETH, by default false
-  token0Permit?: PermitOptions // The optional permit parameters for spending token0
-  token1Permit?: PermitOptions // The optional permit parameters for spending token1
+  /** Creates pool if not initialized before mint. */
+  createPool?: boolean
+  /** Whether the tier needs to be created */
+  createTier?: boolean
+  /** How much the pool price is allowed to move. */
+  slippageTolerance: Percent
+  /** Whether to spend ether. If true, one of the pool tokens must be WETH, by default false */
+  useNative?: NativeCurrency
+  /** The optional permit parameters for spending token0 */
+  token0Permit?: PermitOptions
+  /** The optional permit parameters for spending token1 */
+  token1Permit?: PermitOptions
 }
 
+/**
+ * Options for producing the calldata to add liquidity to existing position.
+ */
 export type IncreaseOptions = {
-  tokenId: BigintIsh //           Indicates the ID of the position to increase liquidity for.
+  /** Indicates the ID of the position to increase liquidity for. */
+  tokenId: BigintIsh
+  /** Whether to use internal account to pay tokens */
   useAccount: boolean
-  slippageTolerance: Percent //   How much the pool price is allowed to move.
-  useNative?: NativeCurrency //   Whether to spend ether. If true, one of the pool tokens must be WETH, by default false
-  token0Permit?: PermitOptions // The optional permit parameters for spending token0
-  token1Permit?: PermitOptions // The optional permit parameters for spending token1
+  /** How much the pool price is allowed to move. */
+  slippageTolerance: Percent
+  /** Whether to spend ether. If true, one of the pool tokens must be WETH, by default false */
+  useNative?: NativeCurrency
+  /** The optional permit parameters for spending token0 */
+  token0Permit?: PermitOptions
+  /** The optional permit parameters for spending token1 */
+  token1Permit?: PermitOptions
 }
 
+/**
+ * Options for producing the calldata to add liquidity.
+ */
 export type AddLiquidityOptions = MintOptions | IncreaseOptions
 
-// type guard
-function isMint(options: AddLiquidityOptions): options is MintOptions {
-  return 'recipient' in options
-}
-
-// --------------------------------------
-
+/**
+ * Options for producing the calldata to remove liquidity from a position.
+ */
 export interface RemoveLiquidityOptions {
-  tokenId: BigintIsh //           The ID of the token to exit
-  liquidityPercentage: Percent // The percentage of position liquidity to exit.
-  slippageTolerance: Percent //   How much the pool price is allowed to move.
+  /** The ID of the token to exit */
+  tokenId: BigintIsh
+  /** The percentage of position liquidity to exit. */
+  liquidityPercentage: Percent
+  /** How much the pool price is allowed to move. */
+  slippageTolerance: Percent
+  /** The address to receive the withdrawn tokens */
   withdrawalRecipient: string
+  /** Whether to collect partial or all accrued fees in the position */
   collectAllFees: boolean
-  permit?: NFTPermitOptions //    The optional permit of the token ID being exited, in case the exit transaction is being sent by an account that does not own the NFT
+  /** The optional permit of the token ID being exited, in case the exit transaction is being sent by an account that does not own the NFT */
+  permit?: NFTPermitOptions
 }
 
 export interface NFTPermitOptions {
@@ -68,20 +96,29 @@ export interface NFTPermitOptions {
   spender: string
 }
 
-// --------------------------------------
-
+/**
+ * Options for producing the calldata to set limit order type for the position
+ */
 export interface SetLimitOrderTypeOptions {
-  tokenId: BigintIsh //             Id of the position NFT
-  limitOrderType: LimitOrderType // Direction of limit order (0: N/A, 1: zero->one, 2: one->zero)
+  /** Id of the position NFT */
+  tokenId: BigintIsh
+  /** Direction of limit order (0: N/A, 1: zero->one, 2: one->zero) */
+  limitOrderType: LimitOrderType
 }
 
-// --------------------------------------
+// type guard
+function isMint(options: AddLiquidityOptions): options is MintOptions {
+  return 'recipient' in options
+}
 
 export abstract class PositionManager {
   public static INTERFACE = new Interface(PositionManagerABI)
 
   /**
    * Construct calldata for creating a pool
+   * @param pool The pool instance which you want to create it on chain
+   * @param useAccount Whether to use internal account to pay tokens
+   * @param useNative Whether to spend ether if one of the token in the pool is WETH
    */
   public static createPoolCallParameters(
     pool: Pool,
@@ -100,6 +137,10 @@ export abstract class PositionManager {
 
   /**
    * Construct calldata for adding a tier to the pool
+   * @param pool The pool instance containing the tier you want to create on chain
+   * @param tierId The tier id of the new tier
+   * @param useAccount Whether to use internal account to pay tokens
+   * @param useNative Whether to spend ether if one of the token in the pool is WETH
    */
   public static addTierCallParameters(
     pool: Pool,
@@ -304,6 +345,21 @@ export abstract class PositionManager {
     }
   }
 
+  /**
+   * Construct calldata for setting limit order type for a position
+   */
+  public static setLimitOrderTypeParameters(options: SetLimitOrderTypeOptions): MethodParameters {
+    invariant(options.tokenId > 0, 'ZERO_TOKEN_ID')
+    const calldata = PositionManager.INTERFACE.encodeFunctionData('setLimitOrderType', [
+      toHex(options.tokenId),
+      toHex(options.limitOrderType),
+    ])
+    return { calldata, value: toHex(0) }
+  }
+
+  /**
+   * Construct calldata for transfering a position NFT
+   */
   public static safeTransferFromParameters(options: SafeTransferOptions): MethodParameters {
     const recipient = validateAndParseAddress(options.recipient)
     const sender = validateAndParseAddress(options.sender)
@@ -320,15 +376,6 @@ export abstract class PositionManager {
           toHex(options.tokenId),
         ])
 
-    return { calldata, value: toHex(0) }
-  }
-
-  public static setLimitOrderTypeParameters(options: SetLimitOrderTypeOptions): MethodParameters {
-    invariant(options.tokenId > 0, 'ZERO_TOKEN_ID')
-    const calldata = PositionManager.INTERFACE.encodeFunctionData('setLimitOrderType', [
-      toHex(options.tokenId),
-      toHex(options.limitOrderType),
-    ])
     return { calldata, value: toHex(0) }
   }
 }

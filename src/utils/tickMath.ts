@@ -1,6 +1,6 @@
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
-import { MaxUint256, ONE, TWO, ZERO } from '../constants'
+import { MaxUint256, MAX_SQRT_PRICE, MAX_TICK, MIN_SQRT_PRICE, MIN_TICK, ONE, TWO, ZERO } from '../constants'
 import { mostSignificantBit } from './mostSignificantBit'
 
 const Q56 = JSBI.exponentiate(TWO, JSBI.BigInt(56))
@@ -15,11 +15,14 @@ export abstract class TickMath {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {}
 
-  public static MIN_TICK = -776363
-  public static MAX_TICK = 776363
-  public static MIN_SQRT_P: JSBI = JSBI.BigInt('65539')
-  public static MAX_SQRT_P: JSBI = JSBI.BigInt('340271175397327323250730767849398346765')
+  public static MIN_TICK: number = MIN_TICK
+  public static MAX_TICK: number = MAX_TICK
+  public static MIN_SQRT_PRICE: JSBI = MIN_SQRT_PRICE
+  public static MAX_SQRT_PRICE: JSBI = MAX_SQRT_PRICE
 
+  /**
+   * Convert tick to sqrt price
+   */
   public static tickToSqrtPriceX72(tick: number): JSBI {
     invariant(tick >= TickMath.MIN_TICK && tick <= TickMath.MAX_TICK && Number.isInteger(tick), 'TICK')
     const x = tick < 0 ? -tick : tick
@@ -53,9 +56,12 @@ export abstract class TickMath {
       : JSBI.divide(ratio, Q56)
   }
 
+  /**
+   * Convert sqrt price to tick
+   */
   public static sqrtPriceX72ToTick(sqrtPriceX72: JSBI): number {
-    invariant(JSBI.greaterThanOrEqual(sqrtPriceX72, TickMath.MIN_SQRT_P), 'SQRT_RATIO')
-    invariant(JSBI.lessThanOrEqual(sqrtPriceX72, TickMath.MAX_SQRT_P), 'SQRT_RATIO')
+    invariant(JSBI.greaterThanOrEqual(sqrtPriceX72, TickMath.MIN_SQRT_PRICE), 'SQRT_RATIO')
+    invariant(JSBI.lessThanOrEqual(sqrtPriceX72, TickMath.MAX_SQRT_PRICE), 'SQRT_RATIO')
 
     const msb = mostSignificantBit(sqrtPriceX72)
     let log2 = JSBI.leftShift(JSBI.subtract(JSBI.BigInt(msb), JSBI.BigInt(72)), JSBI.BigInt(64))
@@ -69,20 +75,20 @@ export abstract class TickMath {
       }
     }
 
-    const log_sqrt10001 = JSBI.multiply(log2, JSBI.BigInt('255738958999603826347141'))
+    const logBaseSqrt10001 = JSBI.multiply(log2, JSBI.BigInt('255738958999603826347141'))
     const tickHigh = JSBI.toNumber(
       JSBI.signedRightShift(
-        JSBI.add(log_sqrt10001, JSBI.BigInt('17996007701288367970265332090599899137')),
+        JSBI.add(logBaseSqrt10001, JSBI.BigInt('17996007701288367970265332090599899137')),
         JSBI.BigInt(128)
       )
     )
     const tickLow = JSBI.toNumber(
       JSBI.signedRightShift(
         JSBI.subtract(
-          log_sqrt10001,
-          JSBI.lessThan(log_sqrt10001, JSBI.BigInt('-230154402537746701963478439606373042805014528'))
+          logBaseSqrt10001,
+          JSBI.lessThan(logBaseSqrt10001, JSBI.BigInt('-230154402537746701963478439606373042805014528'))
             ? JSBI.BigInt('98577143636729737466164032634120830977')
-            : JSBI.lessThan(log_sqrt10001, JSBI.BigInt('-162097929153559009270803518120019400513814528'))
+            : JSBI.lessThan(logBaseSqrt10001, JSBI.BigInt('-162097929153559009270803518120019400513814528'))
             ? JSBI.BigInt('527810000259722480933883300202676225')
             : ZERO
         ),

@@ -13,35 +13,59 @@ export class Pool {
   public readonly tickSpacing: number
   public readonly tiers: Tier[]
 
+  /**
+   * Construct a pool
+   */
   public constructor(tokenA: Token, tokenB: Token, tickSpacing: number, tiers: Tier[]) {
     invariant(tickSpacing > 0, 'TICK_SPACING')
     invariant(tiers.length > 0, 'ZERO_TIERS')
     ;[this.token0, this.token1] = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA]
     this.tickSpacing = tickSpacing
-    this.tiers = tiers.slice()
+    this.tiers = [...tiers]
+    invariant(
+      tiers.every((tier) => tier.token0.equals(this.token0) && tier.token1.equals(this.token1)),
+      'TIERS_UNDERLYINGS'
+    )
   }
 
-  static fromChainData(tokenA: Token, tokenB: Token, tickSpacing: number, tierDataList: TierChainData[]) {
+  /**
+   * Construct a pool using the tier's data retreived from chain directly
+   */
+  static fromChainData(tokenA: Token, tokenB: Token, tickSpacing: number, tierDataList: TierChainData[]): Pool {
     const tiers = tierDataList.map((tierData) => Tier.fromChainData(tokenA, tokenB, tierData))
     return new Pool(tokenA, tokenB, tickSpacing, tiers)
   }
 
+  /**
+   * Compute pool id
+   */
+  static computePoolId(tokenA: Token, tokenB: Token): string {
+    return keccak256(defaultAbiCoder.encode(['address', 'address'], [tokenA.address, tokenB.address]))
+  }
+
+  /**
+   * Compute pool id
+   */
+  public get poolId(): string {
+    return Pool.computePoolId(this.token0, this.token1)
+  }
+
+  /**
+   * Get the chain ID of the tokens in the pool.
+   */
+  public get chainId(): number {
+    return this.token0.chainId
+  }
+
+  /**
+   * Find a tier of a specific fee tier.
+   * @return [tierId, Tier] if found. Otherwise, return [-1, undefined].
+   */
   public getTierBySqrtGamma(sqrtGamma: number | undefined): [number, Tier | undefined] {
     if (sqrtGamma == null) return [-1, undefined]
     const tier = this.tiers.find((tier) => tier.sqrtGamma === sqrtGamma)
     const tierId = tier ? this.tiers.indexOf(tier) : -1
     return [tierId, tier]
-  }
-
-  public get poolId(): string {
-    return keccak256(defaultAbiCoder.encode(['address', 'address'], [this.token0.address, this.token1.address]))
-  }
-
-  /**
-   * Returns the chain ID of the tokens in the pool.
-   */
-  public get chainId(): number {
-    return this.token0.chainId
   }
 
   /**
@@ -64,7 +88,7 @@ export class Pool {
   }
 
   /**
-   * Return the amount of token0 required to create tier
+   * Return the amount of token0 required to create a tier
    */
   public get token0AmountForCreateTier(): CurrencyAmount<Token> {
     // i.e. (baseLiquidityD8 << 80) / sqrtPrice
@@ -73,7 +97,7 @@ export class Pool {
   }
 
   /**
-   * Return the amount of token1 required to create tier
+   * Return the amount of token1 required to create a tier
    */
   public get token1AmountForCreateTier(): CurrencyAmount<Token> {
     // i.e. (baseLiquidityD8 * sqrtPrice) / (1 << 64)

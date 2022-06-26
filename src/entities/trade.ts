@@ -19,29 +19,65 @@ type Swap<TInput extends Currency, TOutput extends Currency> = {
  * the time the trade is submitted and when it is executed.
  */
 export class Trade<TInput extends Currency, TOutput extends Currency, TTradeType extends TradeType> {
+  /** The swaps of the trade, i.e. which routes and how much is swapped in each that make up the trade. */
   public readonly swaps: Swap<TInput, TOutput>[]
+  /** The type of the trade, either exact in or exact out. */
   public readonly tradeType: TTradeType
-  public readonly inputCurrency: TInput
-  public readonly outputCurrency: TOutput
 
   private _inputAmount?: CurrencyAmount<TInput> // cache
   private _outputAmount?: CurrencyAmount<TOutput> // cache
   private _executionPrice?: Price<TInput, TOutput> // cache
 
   /**
-   * Construct a trade by passing in the pre-computed property values
+   * Creates a trade without computing the result of swapping through the route. Useful when you have simulated the trade
+   * elsewhere and do not have any tick data
+   * @template TInput The input token, either Ether or an ERC-20
+   * @template TOutput The output token, either Ether or an ERC-20
+   * @template TTradeType The type of the trade, either exact in or exact out
+   * @param constructorArguments The arguments passed to the trade constructor
+   * @returns The unchecked trade
    */
-  public constructor({
-    routes,
-    tradeType,
-  }: {
-    routes: {
-      route: Route<TInput, TOutput>
-      inputAmount: CurrencyAmount<TInput>
-      outputAmount: CurrencyAmount<TOutput>
-    }[]
+  public static createUncheckedTrade<TInput extends Currency, TOutput extends Currency, TTradeType extends TradeType>(
+    constructorArguments: Swap<TInput, TOutput> & { tradeType: TTradeType }
+  ): Trade<TInput, TOutput, TTradeType> {
+    return new Trade({
+      ...constructorArguments,
+      routes: [
+        {
+          inputAmount: constructorArguments.inputAmount,
+          outputAmount: constructorArguments.outputAmount,
+          route: constructorArguments.route,
+        },
+      ],
+    })
+  }
+
+  /**
+   * Creates a trade without computing the result of swapping through the routes. Useful when you have simulated the trade
+   * elsewhere and do not have any tick data
+   * @template TInput The input token, either Ether or an ERC-20
+   * @template TOutput The output token, either Ether or an ERC-20
+   * @template TTradeType The type of the trade, either exact in or exact out
+   * @param constructorArguments The arguments passed to the trade constructor
+   * @returns The unchecked trade
+   */
+  public static createUncheckedTradeWithMultipleRoutes<
+    TInput extends Currency,
+    TOutput extends Currency,
+    TTradeType extends TradeType
+  >(constructorArguments: {
+    routes: Swap<TInput, TOutput>[]
     tradeType: TTradeType
-  }) {
+  }): Trade<TInput, TOutput, TTradeType> {
+    return new Trade(constructorArguments)
+  }
+
+  /**
+   * Construct a trade by passing in the pre-computed property values
+   * @param routes The routes through which the trade occurs
+   * @param tradeType The type of trade, exact input or exact output
+   */
+  public constructor({ routes, tradeType }: { routes: Swap<TInput, TOutput>[]; tradeType: TTradeType }) {
     const inputCurrency = routes[0].inputAmount.currency
     const outputCurrency = routes[0].outputAmount.currency
     invariant(
@@ -64,42 +100,20 @@ export class Trade<TInput extends Currency, TOutput extends Currency, TTradeType
 
     this.swaps = routes
     this.tradeType = tradeType
-    this.inputCurrency = inputCurrency
-    this.outputCurrency = outputCurrency
   }
 
   /**
-   * Creates a trade without computing the result of swapping through the route. Useful when you have simulated the trade
-   * elsewhere and do not have any tick data
+   * The input token currency of this trade
    */
-  public static createUncheckedTrade<TInput extends Currency, TOutput extends Currency, TTradeType extends TradeType>(
-    constructorArguments: Swap<TInput, TOutput> & { tradeType: TTradeType }
-  ): Trade<TInput, TOutput, TTradeType> {
-    return new Trade({
-      ...constructorArguments,
-      routes: [
-        {
-          inputAmount: constructorArguments.inputAmount,
-          outputAmount: constructorArguments.outputAmount,
-          route: constructorArguments.route,
-        },
-      ],
-    })
+  public get inputCurrency(): TInput {
+    return this.swaps[0].inputAmount.currency
   }
 
   /**
-   * Creates a trade without computing the result of swapping through the routes. Useful when you have simulated the trade
-   * elsewhere and do not have any tick data
+   * The output token currency of this trade
    */
-  public static createUncheckedTradeWithMultipleRoutes<
-    TInput extends Currency,
-    TOutput extends Currency,
-    TTradeType extends TradeType
-  >(constructorArguments: {
-    routes: Swap<TInput, TOutput>[]
-    tradeType: TTradeType
-  }): Trade<TInput, TOutput, TTradeType> {
-    return new Trade(constructorArguments)
+  public get outputCurrency(): TOutput {
+    return this.swaps[0].outputAmount.currency
   }
 
   /**
@@ -125,7 +139,7 @@ export class Trade<TInput extends Currency, TOutput extends Currency, TTradeType
   }
 
   /**
-   * The price expressed in terms of output amount/input amount.
+   * The price expressed in terms of output amount over input amount.
    */
   public get executionPrice(): Price<TInput, TOutput> {
     return (
@@ -143,12 +157,14 @@ export class Trade<TInput extends Currency, TOutput extends Currency, TTradeType
    * Returns the percent difference between the route's mid price and the price impact
    */
   public get priceImpact(): Percent {
+    // TODO: can simulate it if swap is implemented?
     throw new Error('Mid price not supported')
   }
 
   /**
    * Get the minimum amount that must be received from this trade for the given slippage tolerance
    * @param slippageTolerance The tolerance of unfavorable slippage from the execution price of this trade
+   * @returns The amount out
    */
   public minimumAmountOut(slippageTolerance: Percent, amountOut = this.outputAmount): CurrencyAmount<TOutput> {
     invariant(!slippageTolerance.lessThan(ZERO), 'SLIPPAGE_TOLERANCE')
@@ -166,6 +182,7 @@ export class Trade<TInput extends Currency, TOutput extends Currency, TTradeType
   /**
    * Get the maximum amount in that can be spent via this trade for the given slippage tolerance
    * @param slippageTolerance The tolerance of unfavorable slippage from the execution price of this trade
+   * @returns The amount in
    */
   public maximumAmountIn(slippageTolerance: Percent, amountIn = this.inputAmount): CurrencyAmount<TInput> {
     invariant(!slippageTolerance.lessThan(ZERO), 'SLIPPAGE_TOLERANCE')

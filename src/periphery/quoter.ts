@@ -8,6 +8,13 @@ import { encodeRouteToPath } from './encodeRouteToPath'
 export abstract class SwapQuoter {
   public static INTERFACE = new Interface(QuoterABI)
 
+  /**
+   * Produces the calldatas for quoting a swap on-chain through the quoter contract.
+   * @param route The swap route, a list of pools through which a swap can occur
+   * @param amount The amount of the quote, either an amount in, or an amount out
+   * @param tradeType The trade type, either exact input or exact output
+   * @returns The formatted calldata
+   */
   public static quoteCallParameters<TInput extends Currency, TOutput extends Currency>(
     route: Route<TInput, TOutput>,
     amount: CurrencyAmount<TInput | TOutput>,
@@ -31,6 +38,13 @@ export abstract class SwapQuoter {
     return { calldata, value: toHex(0) }
   }
 
+  /**
+   * Produces the calldatas for simulate a swap on-chain through the quoter contract.
+   * @param route The swap route, a list of pools through which a swap can occur
+   * @param amount The amount of the quote, either an amount in, or an amount out
+   * @param tradeType The trade type, either exact input or exact output
+   * @returns The formatted calldata
+   */
   public static simulateCallParameters<TInput extends Currency, TOutput extends Currency>(
     route: Route<TInput, TOutput>,
     amount: CurrencyAmount<TInput | TOutput>,

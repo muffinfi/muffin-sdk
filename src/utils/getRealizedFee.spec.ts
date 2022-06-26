@@ -51,7 +51,7 @@ describe('getRealizedFee', () => {
     outputAmount: CurrencyAmount.fromRawAmount(token2, 100000),
   })
 
-  it('no price impact', () => {
+  it('no fee', () => {
     const { percent, amount } = getRealizedFee(trade, [
       [{ tierAmountsIn: ['100000', '0'] }, { tierAmountsIn: ['100000', '0'] }],
     ])
@@ -59,7 +59,7 @@ describe('getRealizedFee', () => {
     expect(amount.quotient.toString()).toEqual('0')
   })
 
-  it('has price impact', () => {
+  it('has fee', () => {
     const { percent, amount } = getRealizedFee(trade, [
       [{ tierAmountsIn: ['50000', '50000'] }, { tierAmountsIn: ['100000', '0'] }],
     ])

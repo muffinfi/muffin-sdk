@@ -3,8 +3,8 @@ import JSBI from 'jsbi'
 // Contract constants
 export const MIN_TICK = -776363
 export const MAX_TICK = 776363
-export const MIN_SQRT_P = JSBI.BigInt('65539')
-export const MAX_SQRT_P = JSBI.BigInt('340271175397327323250730767849398346765')
+export const MIN_SQRT_PRICE = JSBI.BigInt('65539')
+export const MAX_SQRT_PRICE = JSBI.BigInt('340271175397327323250730767849398346765')
 export const BASE_LIQUIDITY_D8 = 100
 export const BASE_LIQUIDITY = 100 * 2 ** 8
 export enum LimitOrderType {
