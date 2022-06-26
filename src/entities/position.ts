@@ -149,99 +149,101 @@ export class Position {
     return new Position({ tickLower, tickUpper, liquidityD8, limitOrderType, ...rest })
   }
 
-  /**
-   * Returns the tier where the position is in
-   */
+  /** Returns the tier where the position is in */
   public get poolTier(): Tier {
     invariant(this.tierId < this.pool.tiers.length, 'TIER_ID')
     return this.pool.tiers[this.tierId]
   }
 
-  /**
-   * Returns the amount of liquidity of the position
-   */
+  /** Returns the amount of liquidity of the position */
   public get liquidity(): JSBI {
     return JSBI.multiply(this.liquidityD8, JSBI.BigInt(256))
   }
 
-  /**
-   * Returns the price of token0 denominated in token1 at the lower tick
-   */
+  /** Returns the price of token0 denominated in token1 at the lower tick */
   public get token0PriceLower(): Price<Token, Token> {
     return tickToPrice(this.pool.token0, this.pool.token1, this.tickLower)
   }
 
-  /**
-   * Returns the price of token0 denominated in token1 at the upper tick
-   */
+  /** Returns the price of token0 denominated in token1 at the upper tick */
   public get token0PriceUpper(): Price<Token, Token> {
     return tickToPrice(this.pool.token0, this.pool.token1, this.tickUpper)
   }
 
-  /**
-   * Returns the amount of underlying token0 in this position
-   */
-  public get amount0(): CurrencyAmount<Token> {
-    if (this._token0Amount == null) {
-      const { sqrtPUpper, sqrtPExit } = this._calculateSqrtPrices()
-      const amount0 = PoolMath.getAmount0Delta(sqrtPExit, sqrtPUpper, this.liquidity, false)
-      this._token0Amount = CurrencyAmount.fromRawAmount(this.pool.token0, amount0)
-    }
-    return this._token0Amount
+  /** Sqrt price of the lower tick boundary */
+  public get sqrtPriceLower(): JSBI {
+    return TickMath.tickToSqrtPriceX72(this.tickLower)
   }
 
-  /**
-   * Returns the amount of underlying token0 in this position
-   */
+  /** Sqrt price of the upper tick boundary */
+  public get sqrtPriceUpper(): JSBI {
+    return TickMath.tickToSqrtPriceX72(this.tickUpper)
+  }
+
+  /** Returns true if this position is a limit order */
+  public get isLimitOrder(): boolean {
+    return this.limitOrderType === LimitOrderType.ZeroForOne || this.limitOrderType === LimitOrderType.OneForZero
+  }
+
+  /** Returns the amount of underlying token0 in this position */
+  public get amount0(): CurrencyAmount<Token> {
+    return this._computeTokenAmounts()[0]
+  }
+
+  /** Returns the amount of underlying token0 in this position */
   public get amount1(): CurrencyAmount<Token> {
-    if (this._token1Amount == null) {
-      const { sqrtPLower, sqrtPExit } = this._calculateSqrtPrices()
-      const amount1 = PoolMath.getAmount1Delta(sqrtPExit, sqrtPLower, this.liquidity, false)
+    return this._computeTokenAmounts()[1]
+  }
+
+  private _computeTokenAmounts(): [CurrencyAmount<Token>, CurrencyAmount<Token>] {
+    if (this._token0Amount == null || this._token1Amount == null) {
+      const sqrtPLower = this.sqrtPriceLower
+      const sqrtPUpper = this.sqrtPriceUpper
+
+      const sqrtPCurrent = this.settled
+        ? this.limitOrderType === LimitOrderType.ZeroForOne
+          ? sqrtPUpper
+          : sqrtPLower
+        : this.poolTier.sqrtPriceX72
+
+      const { amount0, amount1 } = PoolMath.amountsForLiquidityDeltaD8(
+        sqrtPCurrent,
+        sqrtPLower,
+        sqrtPUpper,
+        JSBI.multiply(this.liquidityD8, JSBI.BigInt(-1)) // simulate withdrawing liquidity
+      )
+
+      this._token0Amount = CurrencyAmount.fromRawAmount(this.pool.token0, amount0)
       this._token1Amount = CurrencyAmount.fromRawAmount(this.pool.token1, amount1)
     }
-    return this._token1Amount
-  }
-
-  private _calculateSqrtPrices() {
-    const sqrtPLower = TickMath.tickToSqrtPriceX72(this.tickLower)
-    const sqrtPUpper = TickMath.tickToSqrtPriceX72(this.tickUpper)
-
-    let sqrtPExit: JSBI
-    if (this.settled) {
-      sqrtPExit = this.limitOrderType === LimitOrderType.ZeroForOne ? sqrtPUpper : sqrtPLower
-    } else {
-      const sqrtPCurrent = this.poolTier.sqrtPriceX72
-      if (JSBI.lessThan(sqrtPCurrent, sqrtPLower)) {
-        sqrtPExit = sqrtPLower
-      } else if (JSBI.greaterThan(sqrtPCurrent, sqrtPUpper)) {
-        sqrtPExit = sqrtPUpper
-      } else {
-        sqrtPExit = sqrtPCurrent
-      }
-    }
-    return { sqrtPLower, sqrtPUpper, sqrtPExit }
+    return [this._token0Amount, this._token1Amount]
   }
 
   /**
    * Returns the amounts of underlying tokens at the given price with the amount of liquidity of this position
    */
-  public amountsAtPrice(sqrtPriceX72: JSBI, roundUp: boolean): Readonly<{ amount0: JSBI; amount1: JSBI }> {
-    return PoolMath.amountsForLiquidityD8(
+  public amountsAtPrice(sqrtPriceX72: JSBI): Readonly<{ amount0: JSBI; amount1: JSBI }> {
+    return PoolMath.amountsForLiquidityDeltaD8(
       sqrtPriceX72,
-      TickMath.tickToSqrtPriceX72(this.tickLower),
-      TickMath.tickToSqrtPriceX72(this.tickUpper),
-      this.liquidityD8,
-      roundUp
+      this.sqrtPriceLower,
+      this.sqrtPriceUpper,
+      JSBI.multiply(this.liquidityD8, JSBI.BigInt(-1)) // simulate withdrawing liquidity
     )
+  }
+
+  /**
+   * Returns the minimum input amounts required to mint the amount of liquidity of this position if the tier is at the
+   * given price.
+   */
+  public mintAmountsAtPrice(sqrtPriceX72: JSBI): Readonly<{ amount0: JSBI; amount1: JSBI }> {
+    return PoolMath.amountsForLiquidityDeltaD8(sqrtPriceX72, this.sqrtPriceLower, this.sqrtPriceUpper, this.liquidityD8)
   }
 
   /**
    * Returns the minimum input amounts required to mint the amount of liquidity of this position at the current price
    */
   public get mintAmounts(): Readonly<{ amount0: JSBI; amount1: JSBI }> {
-    if (this._mintAmounts == null) {
-      this._mintAmounts = this.amountsAtPrice(this.poolTier.sqrtPriceX72, true)
-    }
+    if (this._mintAmounts == null) this._mintAmounts = this.mintAmountsAtPrice(this.poolTier.sqrtPriceX72)
     return this._mintAmounts
   }
 
@@ -251,15 +253,10 @@ export class Position {
    */
   public get settleAmounts(): Readonly<{ amount0?: JSBI; amount1?: JSBI }> {
     if (this._settleAmounts == null) {
-      if (this.limitOrderType !== LimitOrderType.ZeroForOne && this.limitOrderType !== LimitOrderType.OneForZero) {
-        this._settleAmounts = {}
+      if (this.isLimitOrder) {
+        this._settleAmounts = this.amountsAtPrice(LimitOrderType.ZeroForOne ? this.sqrtPriceUpper : this.sqrtPriceLower)
       } else {
-        this._settleAmounts = this.amountsAtPrice(
-          this.limitOrderType === LimitOrderType.ZeroForOne
-            ? TickMath.tickToSqrtPriceX72(this.tickUpper)
-            : TickMath.tickToSqrtPriceX72(this.tickLower),
-          false
-        )
+        this._settleAmounts = {}
       }
     }
     return this._settleAmounts
@@ -269,8 +266,8 @@ export class Position {
    * Returns the minimum input amounts required to mint the amount of liquidity of this position with the given slippage tolerance
    */
   public mintAmountsWithSlippage(slippageTolerance: Percent): Readonly<{ amount0: JSBI; amount1: JSBI }> {
-    const sqrtPLower = TickMath.tickToSqrtPriceX72(this.tickLower)
-    const sqrtPUpper = TickMath.tickToSqrtPriceX72(this.tickUpper)
+    const sqrtPLower = this.sqrtPriceLower
+    const sqrtPUpper = this.sqrtPriceUpper
 
     // calculate minimum input amounts required to mint the liquidityD8 specified in this position
     const { amount0: _amount0, amount1: _amount1 } = this.mintAmounts
@@ -282,6 +279,7 @@ export class Position {
     const { sqrtPriceSlippageLower, sqrtPriceSlippageUpper } = this.poolTier.sqrtPriceAfterSlippage(slippageTolerance)
 
     // calculate minimum input amounts required to mint the "actual liquidityD8" under the tolerated current tier price
+    PoolMath.amountsForLiquidityDeltaD8(sqrtPriceSlippageUpper, sqrtPLower, sqrtPUpper, liquidityD8)
     const { amount0 } = PoolMath.minInputAmountsForLiquidityD8(sqrtPriceSlippageUpper, sqrtPLower, sqrtPUpper, liquidityD8) // prettier-ignore
     const { amount1 } = PoolMath.minInputAmountsForLiquidityD8(sqrtPriceSlippageLower, sqrtPLower, sqrtPUpper, liquidityD8) // prettier-ignore
     return { amount0, amount1 }
@@ -292,8 +290,8 @@ export class Position {
    * (Note that this is not for settled position)
    */
   public burnAmountsWithSlippage(slippageTolerance: Percent): Readonly<{ amount0: JSBI; amount1: JSBI }> {
-    const sqrtPLower = TickMath.tickToSqrtPriceX72(this.tickLower)
-    const sqrtPUpper = TickMath.tickToSqrtPriceX72(this.tickUpper)
+    const sqrtPLower = this.sqrtPriceLower
+    const sqrtPUpper = this.sqrtPriceUpper
 
     // calculate the most tolerated tier current sqrt prices with slippage
     const { sqrtPriceSlippageLower, sqrtPriceSlippageUpper } = this.poolTier.sqrtPriceAfterSlippage(slippageTolerance)
