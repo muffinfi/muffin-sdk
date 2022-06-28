@@ -254,7 +254,9 @@ export class Position {
   public get settleAmounts(): Readonly<{ amount0?: JSBI; amount1?: JSBI }> {
     if (this._settleAmounts == null) {
       if (this.isLimitOrder) {
-        this._settleAmounts = this.amountsAtPrice(LimitOrderType.ZeroForOne ? this.sqrtPriceUpper : this.sqrtPriceLower)
+        const sqrtPriceSettle =
+          this.limitOrderType === LimitOrderType.ZeroForOne ? this.sqrtPriceUpper : this.sqrtPriceLower
+        this._settleAmounts = this.amountsAtPrice(sqrtPriceSettle)
       } else {
         this._settleAmounts = {}
       }
@@ -280,8 +282,8 @@ export class Position {
 
     // calculate minimum input amounts required to mint the "actual liquidityD8" under the tolerated current tier price
     PoolMath.amountsForLiquidityDeltaD8(sqrtPriceSlippageUpper, sqrtPLower, sqrtPUpper, liquidityD8)
-    const { amount0 } = PoolMath.minInputAmountsForLiquidityD8(sqrtPriceSlippageUpper, sqrtPLower, sqrtPUpper, liquidityD8) // prettier-ignore
-    const { amount1 } = PoolMath.minInputAmountsForLiquidityD8(sqrtPriceSlippageLower, sqrtPLower, sqrtPUpper, liquidityD8) // prettier-ignore
+    const { amount0 } = PoolMath.minInputAmountsForLiquidityD8(sqrtPriceSlippageLower, sqrtPLower, sqrtPUpper, liquidityD8) // prettier-ignore
+    const { amount1 } = PoolMath.minInputAmountsForLiquidityD8(sqrtPriceSlippageUpper, sqrtPLower, sqrtPUpper, liquidityD8) // prettier-ignore
     return { amount0, amount1 }
   }
 
