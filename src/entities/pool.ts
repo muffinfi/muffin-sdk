@@ -40,14 +40,15 @@ export class Pool {
    * Compute pool id
    */
   static computePoolId(tokenA: Token, tokenB: Token): string {
-    return keccak256(defaultAbiCoder.encode(['address', 'address'], [tokenA.address, tokenB.address]))
+    const [token0, token1] = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA]
+    return keccak256(defaultAbiCoder.encode(['address', 'address'], [token0.address, token1.address]))
   }
 
   /**
    * Compute pool id
    */
   public get poolId(): string {
-    return Pool.computePoolId(this.token0, this.token1)
+    return keccak256(defaultAbiCoder.encode(['address', 'address'], [this.token0.address, this.token1.address]))
   }
 
   /**

@@ -3,7 +3,7 @@ import invariant from 'tiny-invariant'
 import { ONE, ZERO } from '../constants'
 import { Route } from './route'
 
-type Swap<TInput extends Currency, TOutput extends Currency> = {
+interface Swap<TInput extends Currency, TOutput extends Currency> {
   route: Route<TInput, TOutput>
   inputAmount: CurrencyAmount<TInput>
   outputAmount: CurrencyAmount<TOutput>
@@ -89,6 +89,8 @@ export class Trade<TInput extends Currency, TOutput extends Currency, TTradeType
       'OUTPUT_CURRENCY_MATCH'
     )
 
+    // pool repeats on one single route. Technicall disallowed.
+    // pool repeats on different routes. Techincally allowed, but existing swap simulation doesn't support that.
     const numPools = routes.map(({ route }) => route.pools.length).reduce((total, cur) => total + cur, 0)
     const poolIdSet = new Set<string>()
     for (const { route } of routes) {

@@ -30,15 +30,17 @@ export class Route<TInput extends Currency, TOutput extends Currency> {
 
     // check all first and last pools correct with input and output tokens
     const wrappedInput = input.wrapped
+    const wrappedOutput = output.wrapped
     invariant(pools[0].involvesToken(wrappedInput), 'INPUT')
-    invariant(pools[pools.length - 1].involvesToken(output.wrapped), 'OUTPUT')
+    invariant(pools[pools.length - 1].involvesToken(wrappedOutput), 'OUTPUT')
 
     // check tier choices
-    invariant(
-      tierChoicesList.every((choices) => choices > 0 && choices <= MAX_TIER_CHOICES),
-      'TIER_CHOICES'
-    )
     invariant(tierChoicesList.length === pools.length, 'TIER_CHOICES_COUNT')
+    const cleanedTierChoicesList = tierChoicesList.map((choices, i) => {
+      const cleaned = choices % (1 << pools[i].tiers.length)
+      invariant(choices <= MAX_TIER_CHOICES && cleaned > 0, 'TIER_CHOICES')
+      return cleaned
+    })
 
     // make an array of Token from input to output
     const tokenPath: Token[] = [wrappedInput]
@@ -48,10 +50,11 @@ export class Route<TInput extends Currency, TOutput extends Currency> {
       token = token.equals(pool.token0) ? pool.token1 : pool.token0
       tokenPath.push(token)
     }
+    invariant(token.equals(wrappedOutput), 'PATH')
 
-    this.pools = pools
+    this.pools = [...pools]
     this.tokenPath = tokenPath
-    this.tierChoicesList = tierChoicesList
+    this.tierChoicesList = cleanedTierChoicesList
     this.input = input
     this.output = output
   }
