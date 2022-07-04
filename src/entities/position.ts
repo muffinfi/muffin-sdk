@@ -265,7 +265,11 @@ export class Position {
   }
 
   /**
-   * Returns the minimum input amounts required to mint the amount of liquidity of this position with the given slippage tolerance
+   * Returns the minimum input amounts you _want_ to pay in order to safely mint the exact amount of liquidity of this position
+   * considering the given slippage tolerance.
+   *
+   * Hence, the output amounts must be less than the actual required amounts to mint.
+   * Also, this is NOT the minimum input amounts _required_ to mint the exact amount of liquidity with the given slippage.
    */
   public mintAmountsWithSlippage(slippageTolerance: Percent): Readonly<{ amount0: JSBI; amount1: JSBI }> {
     const sqrtPLower = this.sqrtPriceLower
@@ -281,9 +285,8 @@ export class Position {
     const { sqrtPriceSlippageLower, sqrtPriceSlippageUpper } = this.poolTier.sqrtPriceAfterSlippage(slippageTolerance)
 
     // calculate minimum input amounts required to mint the "actual liquidityD8" under the tolerated current tier price
-    PoolMath.amountsForLiquidityDeltaD8(sqrtPriceSlippageUpper, sqrtPLower, sqrtPUpper, liquidityD8)
-    const { amount0 } = PoolMath.minInputAmountsForLiquidityD8(sqrtPriceSlippageLower, sqrtPLower, sqrtPUpper, liquidityD8) // prettier-ignore
-    const { amount1 } = PoolMath.minInputAmountsForLiquidityD8(sqrtPriceSlippageUpper, sqrtPLower, sqrtPUpper, liquidityD8) // prettier-ignore
+    const { amount0 } = PoolMath.minInputAmountsForLiquidityD8(sqrtPriceSlippageUpper, sqrtPLower, sqrtPUpper, liquidityD8) // prettier-ignore
+    const { amount1 } = PoolMath.minInputAmountsForLiquidityD8(sqrtPriceSlippageLower, sqrtPLower, sqrtPUpper, liquidityD8) // prettier-ignore
     return { amount0, amount1 }
   }
 

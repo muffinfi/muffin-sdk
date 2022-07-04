@@ -54,130 +54,147 @@ describe('Position', () => {
   }
   const position = new Position(positionArgs)
 
-  it('amounts', () => {
-    // test amounts non-zero (since in-range()
-    expect(JSBI.GT(position.amount0.quotient, 0)).toEqual(true)
-    expect(JSBI.GT(position.amount1.quotient, 0)).toEqual(true)
+  describe('burn', () => {
+    it('amounts', () => {
+      // test amounts non-zero (since in-range()
+      expect(JSBI.GT(position.amount0.quotient, 0)).toEqual(true)
+      expect(JSBI.GT(position.amount1.quotient, 0)).toEqual(true)
 
-    // test amount0 > amount1, since tier price skew towards upper price boundary
-    expect(JSBI.GT(position.amount0.quotient, position.amount1.quotient)).toEqual(true)
+      // test amount0 > amount1, since tier price skew towards upper price boundary
+      expect(JSBI.GT(position.amount0.quotient, position.amount1.quotient)).toEqual(true)
+    })
+
+    it('burnAmountsWithSlippage', () => {
+      // test amounts are smaller after slippage
+      const amts = position.burnAmountsWithSlippage(new Percent(5, 100_000)) // 0.00005 or 0.5 bps
+      expect(JSBI.LT(amts.amount0, position.amount0.quotient)).toEqual(true)
+      expect(JSBI.LT(amts.amount1, position.amount1.quotient)).toEqual(true)
+    })
+
+    it('burnAmountsWithSlippage (big slippage)', () => {
+      // test amounts are zero after big slippage (relative to price range)
+      const amts = position.burnAmountsWithSlippage(new Percent(1, 100)) // 1%
+      expect(amts.amount0).toEqual(ZERO)
+      expect(amts.amount1).toEqual(ZERO)
+    })
   })
 
-  it('burnAmountsWithSlippage', () => {
-    // test amounts are smaller after slippage
-    const amts = position.burnAmountsWithSlippage(new Percent(5, 100_000)) // 0.00005 or 0.5 bps
-    expect(JSBI.LT(amts.amount0, position.amount0.quotient)).toEqual(true)
-    expect(JSBI.LT(amts.amount1, position.amount1.quotient)).toEqual(true)
+  describe('mint', () => {
+    it('mintAmounts', () => {
+      // test mint amounts == holding amounts rounded up
+      expect(isZeroOrOne(JSBI.subtract(position.mintAmounts.amount0, position.amount0.quotient))).toEqual(true)
+      expect(isZeroOrOne(JSBI.subtract(position.mintAmounts.amount1, position.amount1.quotient))).toEqual(true)
+
+      // test amount0 > amount1, since tier price skew towards upper price boundary
+      expect(JSBI.GT(position.mintAmounts.amount0, position.mintAmounts.amount1)).toEqual(true)
+    })
+
+    it('mintAmountsWithSlippage', () => {
+      // test amounts are smaller after slippage
+      const amts = position.mintAmountsWithSlippage(new Percent(5, 100_000)) // 0.5 bps
+      expect(JSBI.LT(amts.amount0, position.mintAmounts.amount0)).toEqual(true)
+      expect(JSBI.LT(amts.amount1, position.mintAmounts.amount1)).toEqual(true)
+    })
+
+    it('mintAmountsWithSlippage (big slippage)', () => {
+      // test amounts are zero after big slippage (relative to price range)
+      const amts = position.mintAmountsWithSlippage(new Percent(1, 100)) // 0.5 bps
+      expect(amts.amount0).toEqual(ZERO)
+      expect(amts.amount1).toEqual(ZERO)
+    })
   })
 
-  it('burnAmountsWithSlippage (big slippage)', () => {
-    // test amounts are zero after big slippage (relative to price range)
-    const amts = position.burnAmountsWithSlippage(new Percent(1, 100)) // 1%
-    expect(amts.amount0).toEqual(ZERO)
-    expect(amts.amount1).toEqual(ZERO)
+  describe('settle', () => {
+    it('settleAmounts (0 -> 1)', () => {
+      const pos = new Position({ ...positionArgs, limitOrderType: LimitOrderType.ZeroForOne })
+
+      // test single-sided output
+      expect(pos.settleAmounts.amount0).toEqual(ZERO)
+      expect(JSBI.GT(pos.settleAmounts.amount1, 0)).toEqual(true)
+    })
+
+    it('settleAmounts (1 -> 0)', () => {
+      const pos = new Position({ ...positionArgs, limitOrderType: LimitOrderType.OneForZero })
+
+      // test single-sided output
+      expect(pos.settleAmounts.amount1).toEqual(ZERO)
+      expect(JSBI.GT(pos.settleAmounts.amount0, 0)).toEqual(true)
+    })
+
+    it('amounts when settled (0 -> 1)', () => {
+      const pos = new Position({ ...positionArgs, limitOrderType: LimitOrderType.ZeroForOne, settled: true })
+
+      // test equals to settleAmount
+      expect(pos.amount0.quotient).toEqual(ZERO)
+      expect(JSBI.EQ(pos.amount1.quotient, pos.settleAmounts.amount1)).toEqual(true)
+    })
+
+    it('amounts when settled (1 -> 0)', () => {
+      const pos = new Position({ ...positionArgs, limitOrderType: LimitOrderType.OneForZero, settled: true })
+
+      // test equals to settleAmount
+      expect(pos.amount1.quotient).toEqual(ZERO)
+      expect(JSBI.EQ(pos.amount0.quotient, pos.settleAmounts.amount0)).toEqual(true)
+    })
   })
 
-  it('mintAmounts', () => {
-    // test mint amounts == holding amounts rounded up
-    expect(isZeroOrOne(JSBI.subtract(position.mintAmounts.amount0, position.amount0.quotient))).toEqual(true)
-    expect(isZeroOrOne(JSBI.subtract(position.mintAmounts.amount1, position.amount1.quotient))).toEqual(true)
+  describe('amounts at specifc price', () => {
+    it('amountsAtPrice', () => {
+      const amts = position.amountsAtPrice(position.poolTier.sqrtPriceX72)
+      expect(amts.amount0).toEqual(position.amount0.quotient)
+      expect(amts.amount1).toEqual(position.amount1.quotient)
+    })
 
-    // test amount0 > amount1, since tier price skew towards upper price boundary
-    expect(JSBI.GT(position.mintAmounts.amount0, position.mintAmounts.amount1)).toEqual(true)
+    it('mintAmountsAtPrice', () => {
+      const amts = position.mintAmountsAtPrice(position.poolTier.sqrtPriceX72)
+      expect(amts.amount0).toEqual(position.mintAmounts.amount0)
+      expect(amts.amount1).toEqual(position.mintAmounts.amount1)
+    })
   })
 
-  it('mintAmountsWithSlippage', () => {
-    // test amounts are larger after slippage
-    const amts = position.mintAmountsWithSlippage(new Percent(1, 100)) // 1%
-    expect(JSBI.GT(amts.amount0, position.mintAmounts.amount0)).toEqual(true)
-    expect(JSBI.GT(amts.amount1, position.mintAmounts.amount1)).toEqual(true)
-  })
-
-  it('settleAmounts (0 -> 1)', () => {
-    const pos = new Position({ ...positionArgs, limitOrderType: LimitOrderType.ZeroForOne })
-
-    // test single-sided output
-    expect(pos.settleAmounts.amount0).toEqual(ZERO)
-    expect(JSBI.GT(pos.settleAmounts.amount1, 0)).toEqual(true)
-  })
-
-  it('settleAmounts (1 -> 0)', () => {
-    const pos = new Position({ ...positionArgs, limitOrderType: LimitOrderType.OneForZero })
-
-    // test single-sided output
-    expect(pos.settleAmounts.amount1).toEqual(ZERO)
-    expect(JSBI.GT(pos.settleAmounts.amount0, 0)).toEqual(true)
-  })
-
-  it('amounts when settled (0 -> 1)', () => {
-    const pos = new Position({ ...positionArgs, limitOrderType: LimitOrderType.ZeroForOne, settled: true })
-
-    // test equals to settleAmount
-    expect(pos.amount0.quotient).toEqual(ZERO)
-    expect(JSBI.EQ(pos.amount1.quotient, pos.settleAmounts.amount1)).toEqual(true)
-  })
-
-  it('amounts when settled (1 -> 0)', () => {
-    const pos = new Position({ ...positionArgs, limitOrderType: LimitOrderType.OneForZero, settled: true })
-
-    // test equals to settleAmount
-    expect(pos.amount1.quotient).toEqual(ZERO)
-    expect(JSBI.EQ(pos.amount0.quotient, pos.settleAmounts.amount0)).toEqual(true)
-  })
-
-  it('amountsAtPrice', () => {
-    const amts = position.amountsAtPrice(position.poolTier.sqrtPriceX72)
-    expect(amts.amount0).toEqual(position.amount0.quotient)
-    expect(amts.amount1).toEqual(position.amount1.quotient)
-  })
-
-  it('mintAmountsAtPrice', () => {
-    const amts = position.mintAmountsAtPrice(position.poolTier.sqrtPriceX72)
-    expect(amts.amount0).toEqual(position.mintAmounts.amount0)
-    expect(amts.amount1).toEqual(position.mintAmounts.amount1)
-  })
-
-  const fromAmountArgs = {
-    pool: position.pool,
-    tierId: position.tierId,
-    tickLower: position.tickLower,
-    tickUpper: position.tickUpper,
-  }
-
-  describe('fromAmounts', () => {
-    const args = {
-      ...fromAmountArgs,
-      amount0: position.amount0.quotient,
-      amount1: position.amount1.quotient,
+  describe('construct position from amount', () => {
+    const fromAmountArgs = {
+      pool: position.pool,
+      tierId: position.tierId,
+      tickLower: position.tickLower,
+      tickUpper: position.tickUpper,
     }
 
-    it('non-zero amounts', () => {
-      const pos = Position.fromAmounts(args)
+    describe('fromAmounts', () => {
+      const args = {
+        ...fromAmountArgs,
+        amount0: position.amount0.quotient,
+        amount1: position.amount1.quotient,
+      }
+
+      it('non-zero amounts', () => {
+        const pos = Position.fromAmounts(args)
+
+        // test computed liquidity slightly lower than actual
+        expect(JSBI.LT(pos.liquidityD8, position.liquidityD8)).toEqual(true)
+        expect(closeTo(pos.liquidityD8, position.liquidityD8)).toEqual(true)
+      })
+
+      it('zero amount{0,1}', () => {
+        expect(Position.fromAmounts({ ...args, amount0: ZERO }).liquidityD8).toEqual(ZERO)
+        expect(Position.fromAmounts({ ...args, amount1: ZERO }).liquidityD8).toEqual(ZERO)
+      })
+    })
+
+    it('fromAmount0', () => {
+      const pos = Position.fromAmount0({ ...fromAmountArgs, amount0: position.amount0.quotient })
 
       // test computed liquidity slightly lower than actual
       expect(JSBI.LT(pos.liquidityD8, position.liquidityD8)).toEqual(true)
       expect(closeTo(pos.liquidityD8, position.liquidityD8)).toEqual(true)
     })
 
-    it('zero amount{0,1}', () => {
-      expect(Position.fromAmounts({ ...args, amount0: ZERO }).liquidityD8).toEqual(ZERO)
-      expect(Position.fromAmounts({ ...args, amount1: ZERO }).liquidityD8).toEqual(ZERO)
+    it('fromAmount1', () => {
+      const pos = Position.fromAmount1({ ...fromAmountArgs, amount1: position.amount1.quotient })
+
+      // test computed liquidity slightly lower than actual
+      expect(JSBI.LT(pos.liquidityD8, position.liquidityD8)).toEqual(true)
+      expect(closeTo(pos.liquidityD8, position.liquidityD8)).toEqual(true)
     })
-  })
-
-  it('fromAmount0', () => {
-    const pos = Position.fromAmount0({ ...fromAmountArgs, amount0: position.amount0.quotient })
-
-    // test computed liquidity slightly lower than actual
-    expect(JSBI.LT(pos.liquidityD8, position.liquidityD8)).toEqual(true)
-    expect(closeTo(pos.liquidityD8, position.liquidityD8)).toEqual(true)
-  })
-
-  it('fromAmount1', () => {
-    const pos = Position.fromAmount1({ ...fromAmountArgs, amount1: position.amount1.quotient })
-
-    // test computed liquidity slightly lower than actual
-    expect(JSBI.LT(pos.liquidityD8, position.liquidityD8)).toEqual(true)
-    expect(closeTo(pos.liquidityD8, position.liquidityD8)).toEqual(true)
   })
 })
