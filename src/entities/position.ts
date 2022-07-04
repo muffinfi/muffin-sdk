@@ -1,7 +1,7 @@
 import { BigintIsh, CurrencyAmount, Percent, Price, Token } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
-import { LimitOrderType, MaxUint256, MAX_TICK, MIN_TICK, ZERO } from '../constants'
+import { LimitOrderType, MaxUint256, MAX_TICK, MIN_TICK, Q144, ZERO } from '../constants'
 import { tickToPrice } from '../utils/misc'
 import { PoolMath } from '../utils/poolMath'
 import { TickMath } from '../utils/tickMath'
@@ -35,6 +35,7 @@ export class Position {
   private _token1Amount?: CurrencyAmount<Token> // cache
   private _mintAmounts?: { amount0: JSBI; amount1: JSBI } // cache
   private _settleAmounts?: { amount0?: JSBI; amount1?: JSBI } // cache
+  private _priceToSettle?: Price<Token, Token> // cache
 
   /**
    * Construct a position
@@ -185,6 +186,24 @@ export class Position {
     return this.limitOrderType === LimitOrderType.ZeroForOne || this.limitOrderType === LimitOrderType.OneForZero
   }
 
+  /** Sqrt price which the position will be settled at */
+  public get sqrtPriceSettle(): JSBI {
+    invariant(this.isLimitOrder, 'SQRT_PRICE_TO_SETTLE')
+    return this.limitOrderType === LimitOrderType.ZeroForOne ? this.sqrtPriceUpper : this.sqrtPriceLower
+  }
+
+  /** Returns the price of token0 denominated in token1 when the position is settled  */
+  public get priceToSettle(): Price<Token, Token> {
+    invariant(this.isLimitOrder, 'PRICE_TO_SETTLE')
+
+    if (this._priceToSettle == null) {
+      const sqrtPriceX72 = this.sqrtPriceSettle
+      const priceX144 = JSBI.multiply(sqrtPriceX72, sqrtPriceX72)
+      this._priceToSettle = new Price(this.pool.token0, this.pool.token1, Q144, priceX144)
+    }
+    return this._priceToSettle
+  }
+
   /** Returns the amount of underlying token0 in this position */
   public get amount0(): CurrencyAmount<Token> {
     return this._computeTokenAmounts()[0]
@@ -200,11 +219,7 @@ export class Position {
       const sqrtPLower = this.sqrtPriceLower
       const sqrtPUpper = this.sqrtPriceUpper
 
-      const sqrtPCurrent = this.settled
-        ? this.limitOrderType === LimitOrderType.ZeroForOne
-          ? sqrtPUpper
-          : sqrtPLower
-        : this.poolTier.sqrtPriceX72
+      const sqrtPCurrent = this.settled ? this.sqrtPriceSettle : this.poolTier.sqrtPriceX72
 
       const { amount0, amount1 } = PoolMath.amountsForLiquidityDeltaD8(
         sqrtPCurrent,
@@ -253,13 +268,7 @@ export class Position {
    */
   public get settleAmounts(): Readonly<{ amount0?: JSBI; amount1?: JSBI }> {
     if (this._settleAmounts == null) {
-      if (this.isLimitOrder) {
-        const sqrtPriceSettle =
-          this.limitOrderType === LimitOrderType.ZeroForOne ? this.sqrtPriceUpper : this.sqrtPriceLower
-        this._settleAmounts = this.amountsAtPrice(sqrtPriceSettle)
-      } else {
-        this._settleAmounts = {}
-      }
+      this._settleAmounts = this.isLimitOrder ? this.amountsAtPrice(this.sqrtPriceSettle) : {}
     }
     return this._settleAmounts
   }
