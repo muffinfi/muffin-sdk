@@ -1,5 +1,5 @@
 import { Fraction, Price, Token } from '@uniswap/sdk-core'
-import { priceToClosestTick, tickToPrice } from './misc'
+import { tryParseDecimal, priceToClosestTick, tickToPrice, withoutScientificNotation } from './misc'
 
 describe('misc', () => {
   describe('priceTickConversions', () => {
@@ -122,5 +122,61 @@ describe('misc', () => {
         })
       })
     })
+  })
+
+  it('tryParseDecimal', () => {
+    const check = (x: string, expected: [string, string, number] | undefined) => {
+      const parsed = tryParseDecimal(x)
+      if (expected === undefined) {
+        expect(expected).toEqual(undefined)
+      } else {
+        expect(parsed).toMatchObject(expected)
+        expect(parseFloat(`${expected[0]}${expected[1]}e${expected[2]}`)).toEqual(parseFloat(x))
+      }
+    }
+
+    check('10', ['', '10', 0])
+    check('1.0', ['', '10', -1])
+    check('1.01', ['', '101', -2])
+
+    check('10e+8', ['', '10', 8])
+    check('10e-8', ['', '10', -8])
+
+    check('1.23e+8', ['', '123', -2 + 8])
+    check('1.23e+2', ['', '123', -2 + 2])
+    check('1.23e+1', ['', '123', -2 + 1])
+    check('1.23e+0', ['', '123', -2 + 0])
+    check('1.23e-1', ['', '123', -2 - 1])
+    check('1.23e-2', ['', '123', -2 - 2])
+    check('1.23e-8', ['', '123', -2 - 8])
+
+    check('0.012e-6', ['', '12', -3 - 6])
+    check('0.012e-0', ['', '12', -3 - 0])
+    check('0.012e+3', ['', '12', -3 + 3])
+    check('0.012e+6', ['', '12', -3 + 6])
+  })
+
+  it('withoutScientificNotation', () => {
+    const check = (x: string) => {
+      const result = withoutScientificNotation(x)
+      expect(result?.includes('e')).toBe(false)
+      expect(parseFloat(withoutScientificNotation(x) ?? 'wut')).toEqual(parseFloat(x))
+    }
+    check('10')
+    check('1.0')
+    check('1.01')
+    check('10e+8')
+    check('10e-8')
+    check('1.23e+8')
+    check('1.23e+2')
+    check('1.23e+1')
+    check('1.23e+0')
+    check('1.23e-1')
+    check('1.23e-2')
+    check('1.23e-8')
+    check('0.012e-6')
+    check('0.012e-0')
+    check('0.012e+3')
+    check('0.012e+6')
   })
 })

@@ -112,15 +112,80 @@ export function priceToClosestTick(
     ? encodeSqrtPriceX72(price.numerator, price.denominator)
     : encodeSqrtPriceX72(price.denominator, price.numerator)
 
-  let tick = TickMath.sqrtPriceX72ToTick(sqrtPriceX72)
-  const priceNextTick = tickToPrice(price.baseCurrency, price.quoteCurrency, tick + 1)
+  if (JSBI.greaterThanOrEqual(sqrtPriceX72, MAX_SQRT_PRICE)) return MAX_TICK
+  if (JSBI.lessThanOrEqual(sqrtPriceX72, MIN_SQRT_PRICE)) return MIN_TICK
 
+  let tick = TickMath.sqrtPriceX72ToTick(sqrtPriceX72)
+
+  const nextTickPrice = tickToPrice(price.baseCurrency, price.quoteCurrency, tick + 1)
   const factor = new Fraction(1).add(tolerance)
 
   if (sorted) {
-    if (!price.asFraction.multiply(factor).lessThan(priceNextTick.asFraction)) tick++
+    if (!price.asFraction.multiply(factor).lessThan(nextTickPrice.asFraction)) tick++
   } else {
-    if (!price.asFraction.divide(factor).greaterThan(priceNextTick.asFraction)) tick++
+    if (!price.asFraction.divide(factor).greaterThan(nextTickPrice.asFraction)) tick++
   }
   return tick
+}
+
+/*====================================================================
+ *                           PARSE STRING
+ *===================================================================*/
+
+/**
+ * Parse numeric string into scientific notation with an integer mantissa.
+ * @param value Decimal number in string
+ * @returns [sign, mantissa, exponent], e.g. -12.34e-5 => ["-", "1234", -7]
+ */
+export function tryParseDecimal(value: string): [string, string, number] | undefined {
+  if (!value.match(/^-?\d*\.?\d+(e[+-]?\d+)?$/)) return undefined
+
+  const [sign, absValue] = value.startsWith('-') ? ['-', value.slice(1)] : ['', value]
+  const [m, n] = absValue.split('e')
+  const [integer, fraction] = m.split('.')
+
+  const mantissa = (integer + (fraction ?? '')).replace(/^0+/, '')
+  const exponent = parseInt(n ?? 0) - (fraction ?? '').length
+
+  return [sign, mantissa, exponent]
+}
+
+/**
+ * Convert scientific notation into decimal form, e.g. "-12.34e-5" => "-0.0001234",
+ * @param value Number in scientific notation
+ * @return Number in decimal form only
+ */
+export function withoutScientificNotation(value: string): string | undefined {
+  if (!value.includes('e')) return value
+
+  const parsed = tryParseDecimal(value)
+  if (parsed == null) return undefined
+
+  const [sign, mantissa, exponent] = parsed
+  if (exponent >= 0) {
+    return sign + mantissa + '0'.repeat(exponent)
+  } else {
+    const i = mantissa.length + exponent
+    if (i > 0) {
+      return sign + mantissa.slice(0, i) + '.' + (mantissa.slice(i) || 0)
+    } else {
+      return sign + '0.' + '0'.repeat(-i) + mantissa
+    }
+  }
+}
+
+export function tryParsePriceString(baseToken: Token, quoteToken: Token, value: string) {
+  const val = withoutScientificNotation(value)
+  if (!val || val.startsWith('-')) return undefined
+
+  const [whole, fraction] = val.split('.')
+  const decimals = fraction?.length ?? 0
+  const withoutDecimals = JSBI.BigInt((whole ?? '') + (fraction ?? ''))
+
+  return new Price(
+    baseToken,
+    quoteToken,
+    JSBI.multiply(JSBI.BigInt(10 ** decimals), JSBI.BigInt(10 ** baseToken.decimals)),
+    JSBI.multiply(withoutDecimals, JSBI.BigInt(10 ** quoteToken.decimals))
+  )
 }
