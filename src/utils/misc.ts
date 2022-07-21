@@ -50,6 +50,34 @@ export function encodeSqrtPriceX72(amount1: BigintIsh, amount0: BigintIsh): JSBI
 }
 
 /**
+ * Convert aprice object to sqrt price.
+ * This is base-agnostic, i.e. it does not matter if the base currency of the given price object is token0 or token1,
+ * it will always use token0 as the base currency and token1 as the quote currency.
+ * @param price Price
+ * @returns sqrt price in Q56.72
+ */
+export function priceToSqrtPriceX72(price: Price<Token, Token>): JSBI {
+  return price.baseCurrency.sortsBefore(price.quoteCurrency)
+    ? encodeSqrtPriceX72(price.numerator, price.denominator)
+    : encodeSqrtPriceX72(price.denominator, price.numerator)
+}
+
+/**
+ * Convert sqrt price to price object.
+ * @param baseToken the base token of the price
+ * @param quoteToken the quote token of the price
+ * @param sqrtPriceX72 sqrt price in Q56.72. Must be token0 as base currency
+ * @returns price object
+ */
+export function sqrtPriceX72ToPrice(baseToken: Token, quoteToken: Token, sqrtPriceX72: JSBI): Price<Token, Token> {
+  const priceX144 = JSBI.multiply(sqrtPriceX72, sqrtPriceX72)
+
+  return baseToken.sortsBefore(quoteToken)
+    ? new Price(baseToken, quoteToken, Q144, priceX144)
+    : new Price(baseToken, quoteToken, priceX144, Q144)
+}
+
+/**
  * Returns true if the given sqrt price is in supported price range
  */
 export const isSqrtPriceSupported = (sqrtPriceX72: JSBI): boolean => {
@@ -89,11 +117,7 @@ export function nearestUsableTick(tick: number, tickSpacing: number): number {
  */
 export function tickToPrice(baseToken: Token, quoteToken: Token, tick: number): Price<Token, Token> {
   const sqrtPriceX72 = TickMath.tickToSqrtPriceX72(tick)
-  const priceX144 = JSBI.multiply(sqrtPriceX72, sqrtPriceX72)
-
-  return baseToken.sortsBefore(quoteToken)
-    ? new Price(baseToken, quoteToken, Q144, priceX144)
-    : new Price(baseToken, quoteToken, priceX144, Q144)
+  return sqrtPriceX72ToPrice(baseToken, quoteToken, sqrtPriceX72)
 }
 
 /**
