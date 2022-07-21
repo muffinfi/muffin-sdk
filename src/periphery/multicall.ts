@@ -1,8 +1,8 @@
 import { Interface } from '@ethersproject/abi'
-import { abi as MulticallABI } from '../artifacts/contracts/periphery/base/Multicall.sol/Multicall.json'
+import { abi as IMulticallABI } from '@muffinfi/muffin-contracts/artifacts/contracts/interfaces/common/IMulticall.sol/IMulticall.json'
 
 export abstract class Multicall {
-  public static INTERFACE = new Interface(MulticallABI)
+  public static INTERFACE = new Interface(IMulticallABI)
 
   public static encodeMulticall(calldatas: string | string[]): string {
     if (!Array.isArray(calldatas)) return calldatas

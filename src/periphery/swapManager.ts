@@ -1,8 +1,8 @@
 import { Interface } from '@ethersproject/abi'
+import { abi as ISwapManagerABI } from '@muffinfi/muffin-contracts/artifacts/contracts/interfaces/manager/ISwapManager.sol/ISwapManager.json'
 import { BigintIsh, Currency, CurrencyAmount, Percent, TradeType, validateAndParseAddress } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
-import { abi as SwapManagerABI } from '../artifacts/contracts/periphery/base/SwapManager.sol/SwapManager.json'
 import { SWAP_AMOUNT_TOLERANCE } from '../constants'
 import { Trade } from '../entities/trade'
 import { MethodParameters, toHex } from '../utils/calldata'
@@ -32,7 +32,7 @@ export interface SwapOptions {
 }
 
 export abstract class SwapManager {
-  public static INTERFACE = new Interface(SwapManagerABI)
+  public static INTERFACE = new Interface(ISwapManagerABI)
 
   /**
    * Produces the on-chain method name to call and the hex encoded parameters to pass as arguments for a given trade.

@@ -1,8 +1,8 @@
 import { Interface } from '@ethersproject/abi'
+import { abi as IManagerBaseABI } from '@muffinfi/muffin-contracts/artifacts/contracts/interfaces/manager/IManagerBase.sol/IManagerBase.json'
 import { Currency, CurrencyAmount, validateAndParseAddress } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
-import { abi as ManagerBaseABI } from '../artifacts/contracts/periphery/base/ManagerBase.sol/ManagerBase.json'
 import { MethodParameters, toHex } from '../utils/calldata'
 import { Multicall } from './multicall'
 import { PermitOptions, SelfPermit } from './selfPermit'
@@ -26,7 +26,7 @@ export interface DepositCallOptions extends AccountCallOptions {
 }
 
 export abstract class AccountManager {
-  public static INTERFACE = new Interface(ManagerBaseABI)
+  public static INTERFACE = new Interface(IManagerBaseABI)
 
   private static depositCalldatas(
     currencyAmount: CurrencyAmount<Currency>,

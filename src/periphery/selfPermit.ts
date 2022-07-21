@@ -1,6 +1,6 @@
 import { Interface } from '@ethersproject/abi'
+import { abi as ISelfPermitABI } from '@muffinfi/muffin-contracts/artifacts/contracts/interfaces/manager/ISelfPermit.sol/ISelfPermit.json'
 import { BigintIsh, Token } from '@uniswap/sdk-core'
-import { abi as SelfPermitABI } from '../artifacts/contracts/periphery/base/SelfPermit.sol/SelfPermit.json'
 import { toHex } from '../utils/calldata'
 
 export interface StandardPermitArguments {
@@ -26,7 +26,7 @@ function isAllowedPermit(permitOptions: PermitOptions): permitOptions is Allowed
 }
 
 export abstract class SelfPermit {
-  public static INTERFACE: Interface = new Interface(SelfPermitABI)
+  public static INTERFACE: Interface = new Interface(ISelfPermitABI)
 
   public static encodePermit(token: Token, options: PermitOptions) {
     return isAllowedPermit(options)

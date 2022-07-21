@@ -1,12 +1,12 @@
 import { Interface } from '@ethersproject/abi'
+import { abi as IQuoterABI } from '@muffinfi/muffin-contracts/artifacts/contracts/interfaces/lens/IQuoter.sol/IQuoter.json'
 import { Currency, CurrencyAmount, TradeType } from '@uniswap/sdk-core'
-import { abi as QuoterABI } from '../artifacts/contracts/periphery/lens/IQuoter.sol/IQuoter.json'
 import { Route } from '../entities/route'
 import { MethodParameters, toHex } from '../utils/calldata'
 import { encodeRouteToPath } from './encodeRouteToPath'
 
 export abstract class SwapQuoter {
-  public static INTERFACE = new Interface(QuoterABI)
+  public static INTERFACE = new Interface(IQuoterABI)
 
   /**
    * Produces the calldatas for quoting a swap on-chain through the quoter contract.

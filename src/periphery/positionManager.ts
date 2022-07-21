@@ -1,8 +1,8 @@
 import { Interface } from '@ethersproject/abi'
+import { abi as IPositionManagerABI } from '@muffinfi/muffin-contracts/artifacts/contracts/interfaces/manager/IPositionManager.sol/IPositionManager.json'
 import { BigintIsh, NativeCurrency, Percent, validateAndParseAddress } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
-import { abi as PositionManagerABI } from '../artifacts/contracts/periphery/base/PositionManager.sol/PositionManager.json'
 import { BASE_LIQUIDITY_D8, LimitOrderType, ZERO } from '../constants'
 import { Pool } from '../entities/pool'
 import { Position } from '../entities/position'
@@ -112,7 +112,7 @@ function isMint(options: AddLiquidityOptions): options is MintOptions {
 }
 
 export abstract class PositionManager {
-  public static INTERFACE = new Interface(PositionManagerABI)
+  public static INTERFACE = new Interface(IPositionManagerABI)
 
   /**
    * Construct calldata for creating a pool
