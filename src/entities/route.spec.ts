@@ -1,5 +1,5 @@
 import { Token } from '@uniswap/sdk-core'
-import { MAX_TICK, MAX_TIER_CHOICES, MIN_TICK, Q72 } from '../constants'
+import { MAX_TICK, ALL_TIERS, MIN_TICK, Q72 } from '../constants'
 import { Pool } from './pool'
 import { Route } from './route'
 import { Tier } from './tier'
@@ -76,8 +76,8 @@ describe('Route', () => {
   })
 
   it('exceed max tier choices', () => {
-    expect(() => new Route([pool01, pool12, pool23], [0b1, MAX_TIER_CHOICES << 1, 0b1], token0, token3)).toThrow('TIER_CHOICES') // prettier-ignore
-    new Route([pool01, pool12, pool23], [0b1, MAX_TIER_CHOICES, 0b1], token0, token3) // no throw
+    expect(() => new Route([pool01, pool12, pool23], [0b1, ALL_TIERS << 1, 0b1], token0, token3)).toThrow('TIER_CHOICES') // prettier-ignore
+    new Route([pool01, pool12, pool23], [0b1, ALL_TIERS, 0b1], token0, token3) // no throw
   })
 
   it('unmatched pools and tierChoices length', () => {

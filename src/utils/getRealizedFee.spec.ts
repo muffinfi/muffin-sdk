@@ -1,5 +1,5 @@
 import { CurrencyAmount, Token, TradeType } from '@uniswap/sdk-core'
-import { MAX_TICK, MIN_TICK, Q72 } from '../constants'
+import { ALL_TIERS, MAX_TICK, MIN_TICK, Q72 } from '../constants'
 import { Pool } from '../entities/pool'
 import { Route } from '../entities/route'
 import { Trade } from '../entities/trade'
@@ -46,7 +46,7 @@ describe('getRealizedFee', () => {
 
   const trade = Trade.createUncheckedTrade({
     tradeType: TradeType.EXACT_INPUT,
-    route: new Route([pool01, pool12], [0x3f, 0x3f], token0, token2),
+    route: new Route([pool01, pool12], [ALL_TIERS, ALL_TIERS], token0, token2),
     inputAmount: CurrencyAmount.fromRawAmount(token0, 100000),
     outputAmount: CurrencyAmount.fromRawAmount(token2, 100000),
   })

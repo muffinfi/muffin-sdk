@@ -17,7 +17,7 @@ export function encodeRouteToPath(route: Route<Currency, Currency>, exactOutput:
       values.push(token.address)
     }
     token = pool.token0.equals(token) ? pool.token1 : pool.token0
-    types.push('uint8')
+    types.push('uint16')
     types.push('address')
     values.push(route.tierChoicesList[i])
     values.push(token.address)

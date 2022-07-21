@@ -1,6 +1,6 @@
 import { CurrencyAmount, Fraction, Token, TradeType } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
-import { MAX_TICK, MIN_TICK, Q72 } from '../constants'
+import { ALL_TIERS, MAX_TICK, MIN_TICK, Q72 } from '../constants'
 import { Pool } from '../entities/pool'
 import { Route } from '../entities/route'
 import { Trade } from '../entities/trade'
@@ -59,12 +59,12 @@ describe('getTradeMarginalPrice', () => {
 
   const routes = [
     {
-      route: new Route([pool01, pool12], [0b111111, 0b111111], token0, token2),
+      route: new Route([pool01, pool12], [ALL_TIERS, ALL_TIERS], token0, token2),
       inputAmount: CurrencyAmount.fromRawAmount(token0, 100000),
       outputAmount: CurrencyAmount.fromRawAmount(token2, 100000),
     },
     {
-      route: new Route([pool02], [0b111111], token0, token2),
+      route: new Route([pool02], [ALL_TIERS], token0, token2),
       inputAmount: CurrencyAmount.fromRawAmount(token0, 50000),
       outputAmount: CurrencyAmount.fromRawAmount(token2, 50000),
     },

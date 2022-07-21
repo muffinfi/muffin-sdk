@@ -1,6 +1,6 @@
 import { Currency, Token } from '@uniswap/sdk-core'
 import invariant from 'tiny-invariant'
-import { MAX_TIER_CHOICES } from '../constants'
+import { ALL_TIERS } from '../constants'
 import { Pool } from './pool'
 
 /**
@@ -38,7 +38,7 @@ export class Route<TInput extends Currency, TOutput extends Currency> {
     invariant(tierChoicesList.length === pools.length, 'TIER_CHOICES_COUNT')
     const cleanedTierChoicesList = tierChoicesList.map((choices, i) => {
       const cleaned = choices % (1 << pools[i].tiers.length)
-      invariant(choices <= MAX_TIER_CHOICES && cleaned > 0, 'TIER_CHOICES')
+      invariant(choices <= ALL_TIERS && cleaned > 0, 'TIER_CHOICES')
       return cleaned
     })
 

@@ -20,11 +20,8 @@ export const BASE_LIQUIDITY_D8 = JSBI.BigInt('100')
 /** Tolerable difference between desired and actual swap amounts */
 export const SWAP_AMOUNT_TOLERANCE = JSBI.BigInt('100')
 
-/** Maximum number of tiers per tier */
-export const MAX_TIERS = 6
-
 /** Choose all tiers to allow swapping */
-export const MAX_TIER_CHOICES = (1 << MAX_TIERS) - 1
+export const ALL_TIERS = 0b1111_1111_1111_1111
 
 /** Position's limit order type */
 export enum LimitOrderType {
