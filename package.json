@@ -1,18 +1,18 @@
 {
-  "name": "@muffinfi/muffin-v1-sdk",
+  "name": "@muffinfi/muffin-sdk",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
   },
   "version": "1.0.0",
-  "description": "An SDK for building applications on top of Muffin V1",
+  "description": "An SDK for building applications on top of Muffin",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "files": [
     "dist"
   ],
-  "repository": "https://github.com/deliswap/muffin-v1-sdk.git",
-  "module": "dist/v1-sdk.esm.js",
+  "repository": "https://github.com/muffinfi/muffin-sdk.git",
+  "module": "dist/muffin-sdk.esm.js",
   "scripts": {
     "build": "tsdx build",
     "start": "tsdx watch",
