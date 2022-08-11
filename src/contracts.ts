@@ -16,21 +16,21 @@ export enum SupportedChainId {
  * MuffinHub contract address map
  */
 export const MUFFIN_HUB_ADDRESSES: Record<SupportedChainId, string> = {
-  [SupportedChainId.RINKEBY]: '0xb74842648CaA2841E1e20f03d318118343fd4c03',
+  [SupportedChainId.RINKEBY]: '0x42789c4D6c5Cc9334fef4da662A57D78771Ce9E5',
 }
 
 /**
  * Manager contract address map
  */
 export const MUFFIN_MANAGER_ADDRESSES: Record<SupportedChainId, string> = {
-  [SupportedChainId.RINKEBY]: '0x7069713cDfDA0829111ECcEdcF24C2e3f99Cd467',
+  [SupportedChainId.RINKEBY]: '0x5e090C58E71B86b94fB544b0143363C3414D0579',
 }
 
 /**
  * Lens contract address map
  */
 export const MUFFIN_LENS_ADDRESSES: Record<SupportedChainId, string> = {
-  [SupportedChainId.RINKEBY]: '0x81BBb49E7Fb8C20784A52699008d0bE0Bc8baACB',
+  [SupportedChainId.RINKEBY]: '0xA9933c4586db3Af3ab1cb5EdD4FAEf5b7E9A2626',
 }
 
 /**
