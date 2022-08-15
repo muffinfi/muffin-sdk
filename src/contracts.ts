@@ -30,7 +30,7 @@ export const MUFFIN_MANAGER_ADDRESSES: Record<SupportedChainId, string> = {
  * Lens contract address map
  */
 export const MUFFIN_LENS_ADDRESSES: Record<SupportedChainId, string> = {
-  [SupportedChainId.RINKEBY]: '0xA9933c4586db3Af3ab1cb5EdD4FAEf5b7E9A2626',
+  [SupportedChainId.RINKEBY]: '0xED6165A870F48eA4244D6D2cdf4e19737c9B1E2D',
 }
 
 /**
