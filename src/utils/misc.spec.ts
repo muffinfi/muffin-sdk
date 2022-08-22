@@ -1,5 +1,12 @@
 import { Fraction, Price, Token } from '@uniswap/sdk-core'
-import { tryParseDecimal, priceToClosestTick, tickToPrice, withoutScientificNotation } from './misc'
+import {
+  tryParseDecimal,
+  priceToClosestTick,
+  tickToPrice,
+  withoutScientificNotation,
+  feeToSqrtGamma,
+  sqrtGammaToFee,
+} from './misc'
 
 describe('misc', () => {
   describe('priceTickConversions', () => {
@@ -178,5 +185,32 @@ describe('misc', () => {
     check('0.012e-0')
     check('0.012e+3')
     check('0.012e+6')
+  })
+
+  it('feeToSqrtGamma', () => {
+    const check = (fee: Fraction, sqrtGamma: string) => {
+      const sg = feeToSqrtGamma(fee).toString()
+      expect(sg).toEqual(sqrtGamma)
+      const fee2 = sqrtGammaToFee(+sg)
+      expect(fee2.lessThan(fee)).toBe(true)
+      expect(+fee2.divide(fee).toSignificant(10)).toBeGreaterThan(0.99)
+    }
+
+    check(new Fraction(20, 10000), '99900')
+    check(new Fraction(40, 10000), '99800')
+    check(new Fraction(60, 10000), '99700')
+    check(new Fraction(80, 10000), '99600')
+    check(new Fraction(100, 10000), '99499')
+
+    check(new Fraction(5, 10000), '99975')
+    check(new Fraction(10, 10000), '99950')
+    check(new Fraction(20, 10000), '99900')
+    check(new Fraction(30, 10000), '99850')
+    check(new Fraction(40, 10000), '99800')
+
+    check(new Fraction(4, 100000), '99998')
+    check(new Fraction(1, 10000), '99995')
+    check(new Fraction(3, 10000), '99985')
+    check(new Fraction(5, 10000), '99975')
   })
 })
