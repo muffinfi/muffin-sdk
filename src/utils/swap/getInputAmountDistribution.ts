@@ -1,6 +1,6 @@
 import { Percent, BigintIsh } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
-import { ZERO } from '../constants'
+import { ZERO } from '../../constants'
 
 /**
  * BigintIsh | ethers.BigNumber

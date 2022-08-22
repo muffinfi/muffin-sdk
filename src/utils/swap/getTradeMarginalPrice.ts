@@ -1,7 +1,7 @@
 import { Currency, Fraction, Price, Token, TradeType } from '@uniswap/sdk-core'
 import invariant from 'tiny-invariant'
-import { Route } from '../entities/route'
-import { Trade } from '../entities/trade'
+import { Route } from '../../entities/route'
+import { Trade } from '../../entities/trade'
 import { getInputAmountDistribution, Hop } from './getInputAmountDistribution'
 
 /**

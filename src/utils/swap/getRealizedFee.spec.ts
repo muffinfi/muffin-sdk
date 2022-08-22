@@ -1,8 +1,8 @@
 import { CurrencyAmount, Token, TradeType } from '@uniswap/sdk-core'
-import { ALL_TIERS, MAX_TICK, MIN_TICK, Q72 } from '../constants'
-import { Pool } from '../entities/pool'
-import { Route } from '../entities/route'
-import { Trade } from '../entities/trade'
+import { ALL_TIERS, MAX_TICK, MIN_TICK, Q72 } from '../../constants'
+import { Pool } from '../../entities/pool'
+import { Route } from '../../entities/route'
+import { Trade } from '../../entities/trade'
 import { getRealizedFee } from './getRealizedFee'
 
 function token({
