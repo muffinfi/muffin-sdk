@@ -2,6 +2,7 @@ import { BigintIsh, Fraction, Price, sqrt, Token } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { E10, MAX_SQRT_PRICE, MAX_TICK, MIN_SQRT_PRICE, MIN_TICK, Q144 } from '../constants'
+import { ceilDiv } from './ceilDiv'
 import { TickMath } from './tickMath'
 
 /*====================================================================
@@ -14,7 +15,7 @@ export function isValidSqrtGamma(sqrtGamma: number | undefined): sqrtGamma is nu
 
 /**
  * Convert sqrt gamma to fee, a value in [0, 1]
- * @param sqrtGamma Sqrt gamma. Assumed it is valid.
+ * @param sqrtGamma Sqrt gamma, in [0, 100000]. Assumed it is valid.
  * @return Fee, in [0, 1]
  */
 export const sqrtGammaToFee = (sqrtGamma: number): Fraction => {
@@ -25,11 +26,26 @@ export const sqrtGammaToFee = (sqrtGamma: number): Fraction => {
 
 /**
  * Convert sqrt gamma to fee percent, a value in [0, 100]
- * @param sqrtGamma Sqrt gamma. Assumed it is valid.
+ * @param sqrtGamma Sqrt gamma, in [0, 100000]. Assumed it is valid.
  * @return Fee percent, in [0, 100]
  */
 export const sqrtGammaToFeePercent = (sqrtGamma: number): Fraction => {
   return sqrtGammaToFee(sqrtGamma).multiply(100)
+}
+
+/**
+ * Convert fee fraction to sqrt gamma in JSBI.
+ * Conversion is always round up, i.e. actual fee percent can be smaller in contract.
+ * @param fee Fee percent, in [0, 1]
+ * @return Sqrt gamma, in [0, 100000].
+ */
+export const feeToSqrtGamma = (fee: Fraction): JSBI => {
+  const gamma = new Fraction(1, 1).subtract(fee)
+  const gammaE10 = ceilDiv(gamma.multiply(E10).multiply(10).quotient, JSBI.BigInt(10))
+  const sqrtGammaE5 = sqrt(gammaE10)
+  return JSBI.equal(JSBI.multiply(sqrtGammaE5, sqrtGammaE5), gammaE10)
+    ? sqrtGammaE5
+    : JSBI.add(sqrtGammaE5, JSBI.BigInt(1))
 }
 
 /*====================================================================
