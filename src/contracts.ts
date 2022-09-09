@@ -38,7 +38,7 @@ export const MUFFIN_MANAGER_ADDRESSES: Record<SupportedChainId, string> = {
 export const MUFFIN_LENS_ADDRESSES: Record<SupportedChainId, string> = {
   [SupportedChainId.MAINNET]: '0xAA7d5bdF76F6143F200F6F2D831bb049a37De935',
   [SupportedChainId.RINKEBY]: '0xED6165A870F48eA4244D6D2cdf4e19737c9B1E2D',
-  [SupportedChainId.GOERLI]: '0xe44361A70C9944B10F225037308250E911B24502',
+  [SupportedChainId.GOERLI]: '0x1a55404cf1E3666bb612B78C8F18af730997Ca96',
 }
 
 /**
