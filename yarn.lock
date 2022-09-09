@@ -1491,10 +1491,10 @@
     "@types/yargs" "^15.0.0"
     chalk "^3.0.0"
 
-"@muffinfi/muffin-contracts@^1.0.13":
-  version "1.0.13"
-  resolved "https://registry.yarnpkg.com/@muffinfi/muffin-contracts/-/muffin-contracts-1.0.13.tgz#d4dda7e0adf39bcb0c6601911fce6830f1a7094a"
-  integrity sha512-fbq6zPXpIrLSNl4/jIrcBinH2ReWzP6d8ikr6YP3k/ZHqV6jfaZ5bG44pydsQMRZO0j7cklE7DsMlIlwyhbcjQ==
+"@muffinfi/muffin-contracts@^1.0.14":
+  version "1.0.14"
+  resolved "https://registry.yarnpkg.com/@muffinfi/muffin-contracts/-/muffin-contracts-1.0.14.tgz#f038e7e8ac56161972400dce3f8d72cf81ffece9"
+  integrity sha512-tDs8+oHGNkDDO5l6HkcD7EyeYr9m/C86F9o7BbOMpxxreVcmqg4p3xRUsumg3mAHm2ASxVWQbPpWxEcCRP77gw==
   dependencies:
     "@openzeppelin/contracts" "4.3.1"
 
