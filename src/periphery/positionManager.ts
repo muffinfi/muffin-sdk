@@ -3,7 +3,7 @@ import { abi as IPositionManagerABI } from '@muffinfi/muffin-contracts/artifacts
 import { BigintIsh, NativeCurrency, Percent, validateAndParseAddress } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
-import { BASE_LIQUIDITY_D8, LimitOrderType, ZERO } from '../constants'
+import { LimitOrderType, ZERO } from '../constants'
 import { Pool } from '../entities/pool'
 import { Position } from '../entities/position'
 import { MethodParameters, toHex } from '../utils/calldata'
@@ -202,22 +202,9 @@ export abstract class PositionManager {
       value = params.value
 
       /**
-       * Subtract position's liquidity with a base that is used to create tier.
-       * Note that base liquidity is taking more tokens than it should, as it's using simple xy=k invariant
-       * This will overall charge users more tokens than they desire to input, though small but could be a potential bug
+       * Note that if need to create tier, an extra small amount of tokens will be charged to be the base liquidity of
+       * the new tier. Please make sure the users have enough token balances.
        */
-      const liquidityD8 = JSBI.subtract(position.liquidityD8, BASE_LIQUIDITY_D8)
-      invariant(JSBI.greaterThan(liquidityD8, ZERO), 'ZERO_LIQUIDITY_AFTER_CREATE')
-      position = new Position({
-        pool: position.pool,
-        tierId: position.tierId,
-        tickLower: position.tickLower,
-        tickUpper: position.tickUpper,
-        liquidityD8,
-        limitOrderType: position.limitOrderType,
-        settlementSnapshotId: position.settlementSnapshotId,
-        settled: position.settled,
-      })
     }
 
     // get amounts
