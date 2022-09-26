@@ -1,4 +1,4 @@
-import { BigintIsh, Fraction, Price, sqrt, Token } from '@uniswap/sdk-core'
+import { BigintIsh, Currency, CurrencyAmount, Fraction, Price, sqrt, Token } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import invariant from 'tiny-invariant'
 import { E10, MAX_SQRT_PRICE, MAX_TICK, MIN_SQRT_PRICE, MIN_TICK, Q144 } from '../constants'
@@ -228,4 +228,86 @@ export function tryParsePriceString(baseToken: Token, quoteToken: Token, value: 
     JSBI.multiply(JSBI.BigInt(10 ** decimals), JSBI.BigInt(10 ** baseToken.decimals)),
     JSBI.multiply(withoutDecimals, JSBI.BigInt(10 ** quoteToken.decimals))
   )
+}
+
+/*====================================================================
+ *                        FRACTION <> NUMBER
+ *===================================================================*/
+
+/**
+ * Convert fraction to decimal number
+ */
+export const fractionToNumber = (fraction: Fraction): number => {
+  return Number(fraction.numerator) / Number(fraction.denominator)
+}
+
+/**
+ * Convert currency amount to decimal number
+ */
+export const currencyAmountToNumber = (amount: CurrencyAmount<Currency>): number => {
+  return fractionToNumber(amount.asFraction.divide(amount.decimalScale))
+}
+
+/**
+ * Convert price to decimal number
+ */
+export const priceToNumber = (price: Price<Currency, Currency>): number => {
+  return fractionToNumber(price.asFraction.multiply(price.scalar))
+}
+
+/*====================================================================
+ *                            PRICE RANGE
+ *===================================================================*/
+
+/**
+ * Calculate captial efficiency of the given price range
+ * @param priceCurrent Current price
+ * @param priceLower Lower price boundary
+ * @param priceUpper Upper price boundary
+ * @returns Capitial efficiency, i.e., using the same amount of cash, the amount of liquidity obtained by a position
+ * with the given price range v.s. that obtained by a full-range position.
+ */
+export function getCapitalEfficiency(
+  priceCurrent: Price<Currency, Currency>,
+  priceLower: Price<Currency, Currency>,
+  priceUpper: Price<Currency, Currency>
+): number {
+  const priceBounded = priceCurrent.greaterThan(priceUpper)
+    ? priceUpper
+    : priceCurrent.lessThan(priceLower)
+    ? priceLower
+    : priceCurrent
+  const sqrtPBounded = Math.sqrt(priceToNumber(priceBounded))
+  const sqrtPLower = Math.sqrt(priceToNumber(priceLower))
+  const sqrtPUpper = Math.sqrt(priceToNumber(priceUpper))
+
+  const priceNow = priceToNumber(priceCurrent)
+
+  const denom = priceNow * (1 / sqrtPBounded - 1 / sqrtPUpper) + (sqrtPBounded - sqrtPLower)
+  const num = 2 * Math.sqrt(priceNow)
+  return num / denom
+}
+
+/**
+ * Calculate the weights of the two tokens in a position with the given price range in terms of cash value
+ * @param priceCurrent Current price
+ * @param priceLower Lower price boundary
+ * @param priceUpper Upper price boundary
+ * @returns [token0's weight, token1's weight] in terms of cash value.
+ */
+export function getTokenRatio(
+  priceCurrent: Price<Currency, Currency>,
+  priceLower: Price<Currency, Currency>,
+  priceUpper: Price<Currency, Currency>
+): [number, number] {
+  if (priceCurrent.greaterThan(priceUpper) || priceCurrent.equalTo(priceUpper)) return [0, 1]
+  if (priceCurrent.lessThan(priceLower) || priceCurrent.equalTo(priceLower)) return [1, 0]
+
+  const a = fractionToNumber(priceLower.asFraction.multiply(priceUpper))
+  const b = fractionToNumber(priceCurrent.asFraction.multiply(priceUpper))
+  const p = fractionToNumber(priceCurrent.asFraction)
+
+  const w0 = 1 / ((Math.sqrt(a) - Math.sqrt(b)) / (p - Math.sqrt(b)) + 1)
+  const w1 = 1 - w0
+  return [w0, w1]
 }
