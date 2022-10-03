@@ -289,6 +289,8 @@ export abstract class PositionManager {
       tickLower: position.tickLower,
       tickUpper: position.tickUpper,
       liquidityD8: options.liquidityPercentage.multiply(position.liquidityD8).quotient,
+      limitOrderType: position.limitOrderType,
+      settled: position.settled,
     })
     const liquidityD8 = _partialPosition.liquidityD8
 
