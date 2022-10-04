@@ -301,15 +301,13 @@ export class Position {
 
   /**
    * Returns the minimum output amounts expected from burning the liquidity of this position with the given slippage tolerance
-   * (Note that this is not for settled position)
+   * (Note that slippage tolerance is not for settled position)
    */
   public burnAmountsWithSlippage(slippageTolerance: Percent): Readonly<{ amount0: JSBI; amount1: JSBI }> {
     const sqrtPLower = this.sqrtPriceLower
     const sqrtPUpper = this.sqrtPriceUpper
 
-    // calculate the most tolerated tier current sqrt prices with slippage
-    const { sqrtPriceSlippageLower, sqrtPriceSlippageUpper } = this.poolTier.sqrtPriceAfterSlippage(slippageTolerance)
-
+    // if position is settled, use its end price for calculation
     if (this.settled) {
       return PoolMath.minOutputAmountsForLiquidityD8(
         this.limitOrderType === LimitOrderType.ZeroForOne ? sqrtPUpper : sqrtPLower,
@@ -318,6 +316,9 @@ export class Position {
         this.liquidityD8
       )
     }
+
+    // calculate the most tolerated tier current sqrt prices with slippage
+    const { sqrtPriceSlippageLower, sqrtPriceSlippageUpper } = this.poolTier.sqrtPriceAfterSlippage(slippageTolerance)
 
     // calculate minimum output amounts from burning the liquidity under the tolerated current tier price
     const { amount0 } = PoolMath.minOutputAmountsForLiquidityD8(sqrtPriceSlippageUpper, sqrtPLower, sqrtPUpper, this.liquidityD8) // prettier-ignore
